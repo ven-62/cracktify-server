@@ -14,7 +14,6 @@ class Crack(Base):
     detected_at = Column(DateTime, default=datetime.now(timezone.utc))
 
     user = relationship("User", back_populates="cracks")
-    groups = relationship("CrackGroup", back_populates="crack", cascade="all, delete-orphan")
 
     def to_dict(self):
         return {
