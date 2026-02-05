@@ -1,3 +1,4 @@
+import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy.exc import SQLAlchemyError
@@ -14,6 +15,11 @@ DB_PORT = Config.DB_PORT
 DATABASE_URL = (
     f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 )
+
+print("MYSQLHOST =", os.getenv("MYSQLHOST"))
+print("MYSQLPORT =", os.getenv("MYSQLPORT"))
+print("MYSQLUSER =", os.getenv("MYSQLUSER"))
+print("MYSQLDATABASE =", os.getenv("MYSQLDATABASE"))
 
 # Engine and session
 engine = create_engine(
