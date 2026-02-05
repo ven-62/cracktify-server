@@ -23,3 +23,7 @@ app.include_router(auth_routes.router, prefix="/auth", tags=["Auth"])
 app.include_router(profile_routes.router, prefix="/profile", tags=["Profile"])
 app.include_router(activity_routes.router, prefix="/activities", tags=["Activities"])
 app.include_router(crack_routes.router, prefix="/cracks", tags=["Cracks"])
+
+@app.get("/")
+def read_root():
+    return {"message": "Welcome to the Cracktify API!"}

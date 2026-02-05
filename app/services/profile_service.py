@@ -52,7 +52,7 @@ def download_data(user_id: int, db):
             "id": user.id,
             "first_name": user.first_name,
             "last_name": user.last_name,
-            "email": user.email,
+            "email_address": user.email_address,
             "joined_at": user.created_at.strftime("%Y-%m-%d"),
             # "scans_done": user.scans_done,
             # "cracks_detected": user.cracks_detected,

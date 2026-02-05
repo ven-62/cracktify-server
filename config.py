@@ -17,6 +17,9 @@ class Config:
     EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD", "")
 
     # JWT Settings
-    JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "secretjwtkey")
+    JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+
+    # Cloudinary Settings
+    CLOUDINARY_SECRET_KEY = os.getenv("CLOUDINARY_SECRET_KEY")
 
     DEFAULT_BASE64_AVATAR = os.getenv("DEFAULT_BASE64_AVATAR", "")

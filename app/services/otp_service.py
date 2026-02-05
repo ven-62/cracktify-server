@@ -7,18 +7,18 @@ from app.templates.otp_template import otp_email_template, forgot_password_otp_t
 
 OTP_EXPIRATION_MINUTES = 5
 
-def send_email_otp(email: str, name: str, resend: bool, db):
+def send_email_otp(email_address: str, name: str, resend: bool, db):
     now = datetime.now(timezone.utc)
 
     if resend:
         # Delete existing OTPs for this email
-        db.query(OTP).filter(OTP.email == email).delete()
+        db.query(OTP).filter(OTP.email_address == email_address).delete()
         db.commit()
 
     # Check if user already has a VALID, UNEXPIRED OTP
     valid_otp = (
         db.query(OTP)
-        .filter(OTP.email == email, OTP.expires_at > now)
+        .filter(OTP.email_address == email_address, OTP.expires_at > now)
         .order_by(OTP.created_at.desc())
         .first()
     )
@@ -32,7 +32,7 @@ def send_email_otp(email: str, name: str, resend: bool, db):
 
     # Save OTP to database
     new_otp = OTP(
-        email=email,
+        email_address=email_address,
         otp=otp_code,
         created_at=now,
         expires_at=now + timedelta(minutes=OTP_EXPIRATION_MINUTES)
@@ -43,15 +43,15 @@ def send_email_otp(email: str, name: str, resend: bool, db):
     # Send OTP via email
     subject = "Your One-Time PIN (OTP)"
     content = otp_email_template(name, otp_code)
-    send_email(email, subject, content)
+    send_email(email_address, subject, content)
 
     return {"success": True, "message": "OTP has been sent to your email"}
 
-def verify_entered_otp(email: str, entered_otp: str, db):
+def verify_entered_otp(email_address: str, entered_otp: str, db):
     now = datetime.now(timezone.utc)
 
     # Get the latest OTP for this email
-    last_otp = db.query(OTP).filter(OTP.email == email).order_by(OTP.created_at.desc()).first()
+    last_otp = db.query(OTP).filter(OTP.email_address == email_address).order_by(OTP.created_at.desc()).first()
 
     if not verify_otp(last_otp, entered_otp, now):
         return {"success": False, "message": "Invalid OTP"}
@@ -62,9 +62,9 @@ def verify_entered_otp(email: str, entered_otp: str, db):
 
     return {"success": True, "message": "Email has been verified"}
 
-def send_forgot_password_otp(email: str, db):
+def send_forgot_password_otp(email_address: str, db):
     """Send OTP for forgot password functionality addressing to the first name."""
-    user = db.query(User).filter(User.email == email).first()
+    user = db.query(User).filter(User.email_address == email_address).first()
     if not user:
         return {"success": False, "message": "Email not found"}
 
@@ -72,7 +72,7 @@ def send_forgot_password_otp(email: str, db):
     otp = generate_otp()
 
     new_otp = OTP(
-        email=email,
+        email_address=email_address,
         otp=otp,
         created_at=datetime.now(timezone.utc),
         expires_at=datetime.now(timezone.utc) + timedelta(minutes=OTP_EXPIRATION_MINUTES)
@@ -83,6 +83,6 @@ def send_forgot_password_otp(email: str, db):
 
     subject = "Your Password Reset OTP"
     content = forgot_password_otp_template(name, otp)
-    send_email(email, subject, content)
+    send_email(email_address, subject, content)
 
     return {"success": True, "message": "OTP has been sent to your email"}
