@@ -11,12 +11,16 @@ DB_PASSWORD = Config.DB_PASSWORD
 DB_NAME = Config.DB_NAME
 DB_PORT = Config.DB_PORT
 
-DATABASE_URL = Config.SQLALCHEMY_DATABASE_URI
+DATABASE_URL = (
+    f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+)
 
 # Engine and session
 engine = create_engine(
-    DATABASE_URL,
+    url=DATABASE_URL,
     connect_args={"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {},
+    pool_pre_ping=True,
+    pool_recycle=300,
     echo=True,  # Set to False in production
     future=True
 )
