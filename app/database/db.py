@@ -5,11 +5,11 @@ from sqlalchemy.exc import SQLAlchemyError
 from config import Config
 
 # DATABASE CONFIGURATION
-# DB_HOST = Config.DB_HOST
-# DB_USER = Config.DB_USER
-# DB_PASSWORD = Config.DB_PASSWORD
-# DB_NAME = Config.DB_NAME
-# DB_PORT = Config.DB_PORT
+DB_HOST = Config.DB_HOST
+DB_USER = Config.DB_USER
+DB_PASSWORD = Config.DB_PASSWORD
+DB_NAME = Config.DB_NAME
+DB_PORT = Config.DB_PORT
 
 DATABASE_URL = Config.SQLALCHEMY_DATABASE_URI
 
