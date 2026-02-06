@@ -1,4 +1,4 @@
-import os
+import os, json, base64
 from dotenv import load_dotenv
 
 # Load .env file
@@ -12,9 +12,13 @@ class Config:
     DB_NAME = os.getenv("MYSQLDATABASE")
     DB_PORT = int(os.getenv("MYSQLPORT", 3306))
 
-    # Email settings
-    EMAIL_SENDER = os.getenv("EMAIL_SENDER", "")
-    EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD", "")
+    CREDS_INFO = json.loads(
+        base64.b64decode(os.getenv("GMAIL_CREDENTIALS")).decode("utf-8")
+    )
+
+    TOKEN_INFO = json.loads(
+        base64.b64decode(os.getenv("GMAIL_TOKEN")).decode("utf-8")
+    )
 
     # JWT Settings
     JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")

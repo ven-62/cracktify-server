@@ -15,20 +15,16 @@ def send_email_otp(email_address: str, name: str, resend: bool, db):
         db.query(OTP).filter(OTP.email_address == email_address).delete()
         db.commit()
 
-    # Delete any existing valid OTP
-    valid_otp = (
-        db.query(OTP)
-        .filter(OTP.email_address == email_address, OTP.expires_at > now)
-        .order_by(OTP.created_at.desc())
-        .first()
-    )
-    if valid_otp:
-        db.delete(valid_otp)
-        db.commit()
+    # Remove existing valid OTP
+    db.query(OTP).filter(
+        OTP.email_address == email_address,
+        OTP.expires_at > now
+    ).delete()
+    db.commit()
 
     otp_code = generate_otp()
 
-    # Save OTP to DB **first**
+    # Save OTP FIRST
     new_otp = OTP(
         email_address=email_address,
         otp=otp_code,
@@ -38,49 +34,27 @@ def send_email_otp(email_address: str, name: str, resend: bool, db):
     db.add(new_otp)
     db.commit()
 
-    # Send email synchronously
+    # Send email via Gmail API
     subject = "Your One-Time PIN (OTP)"
     content = otp_email_template(name, otp_code)
-    response = send_email(email_address, subject, content)  # this is blocking
+
+    response = send_email(email_address, subject, content)
+
     if not response.get("success"):
-        return {"success": False, "message": response.get("message", "Failed to send OTP")}
+        return {
+            "success": False,
+            "message": response.get("message", "Failed to send OTP email")
+        }
 
     return {"success": True, "message": "OTP has been sent to your email"}
 
 
-
-def verify_entered_otp(email_address: str, entered_otp: str, db):
-    now = datetime.now(timezone.utc)
-
-    # Get the latest OTP for this email
-    last_otp = db.query(OTP).filter(OTP.email_address == email_address).order_by(OTP.created_at.desc()).first()
-
-    if not verify_otp(last_otp, entered_otp, now):
-        return {"success": False, "message": "Invalid OTP"}
-
-    # Optional: delete the OTP after successful verification
-    db.delete(last_otp)
-    db.commit()
-
-    return {"success": True, "message": "Email has been verified"}
-
 def send_forgot_password_otp(email_address: str, db):
-    """Send OTP for forgot password functionality addressing to the first name."""
     user = db.query(User).filter(User.email_address == email_address).first()
     if not user:
         return {"success": False, "message": "Email not found"}
 
-    name = user.first_name
     otp = generate_otp()
-
-    subject = "Your Password Reset OTP"
-    content = forgot_password_otp_template(name, otp)
-    try:
-        send_email(email_address, subject, content)
-
-    except Exception as ex:
-        print("[WARN] Failed to send forgot password OTP email:", ex)
-        return {"success": True, "message": "OTP saved but email may not have been sent"}
 
     new_otp = OTP(
         email_address=email_address,
@@ -88,8 +62,18 @@ def send_forgot_password_otp(email_address: str, db):
         created_at=datetime.now(timezone.utc),
         expires_at=datetime.now(timezone.utc) + timedelta(minutes=OTP_EXPIRATION_MINUTES)
     )
-
     db.add(new_otp)
     db.commit()
+
+    subject = "Your Password Reset OTP"
+    content = forgot_password_otp_template(user.first_name, otp)
+
+    response = send_email(email_address, subject, content)
+
+    if not response.get("success"):
+        return {
+            "success": False,
+            "message": "OTP saved but email delivery failed"
+        }
 
     return {"success": True, "message": "OTP has been sent to your email"}

@@ -1,31 +1,30 @@
-import smtplib
-from email.mime.multipart import MIMEMultipart
+import base64
 from email.mime.text import MIMEText
+from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
 from config import Config
 
-def send_email(receiver_email, subject, message):
-    SENDER_EMAIL = Config.EMAIL_SENDER
-    APP_PASSWORD = Config.EMAIL_PASSWORD
+SCOPES = ["https://www.googleapis.com/auth/gmail.send"]
 
-    msg = MIMEMultipart()
-    msg["From"] = SENDER_EMAIL
-    msg["To"] = receiver_email
-    msg["Subject"] = subject
-    msg.attach(MIMEText(message, "html"))
+def get_gmail_service():
+    creds = Credentials.from_authorized_user_info(
+        Config.TOKEN_INFO,
+        SCOPES
+    )
+    return build("gmail", "v1", credentials=creds)
 
-    try:
-        # Set timeout to 10 seconds
-        server = smtplib.SMTP("smtp.gmail.com", 587, timeout=10)
-        server.starttls()
-        server.login(SENDER_EMAIL, APP_PASSWORD)
+def send_email(receiver_email: str, subject: str, html_content: str):
+    service = get_gmail_service()
 
-        server.sendmail(SENDER_EMAIL, receiver_email, msg.as_string())
-        server.quit()
+    message = MIMEText(html_content, "html")
+    message["to"] = receiver_email
+    message["subject"] = subject
 
-        return {"success": True, "message": "Email sent successfully"}
+    raw = base64.urlsafe_b64encode(message.as_bytes()).decode()
 
-    except smtplib.SMTPException as e:
-        return {"success": False, "message": f"SMTP error: {str(e)}"}
+    service.users().messages().send(
+        userId="me",
+        body={"raw": raw}
+    ).execute()
 
-    except Exception as e:
-        return {"success": False, "message": f"Failed to send email: {str(e)}"}
+    return {"success": True, "message": "Email sent successfully"}
