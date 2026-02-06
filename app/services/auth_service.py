@@ -39,7 +39,9 @@ def register_user_service(first_name: str, last_name: str, email_address: str, p
 
     db.add(new_user)
     db.commit()
+    db.refresh(new_user)
 
+    # ERROR PROBABLY HAPPEN HERE,
     token = generate_jwt(new_user.id, new_user.email_address)
 
     return {
