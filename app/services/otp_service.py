@@ -12,31 +12,12 @@ def send_email_otp(email_address: str, name: str, resend: bool, db):
     now = datetime.now(timezone.utc)
 
     if resend:
-        # Delete existing OTPs for this email
         db.query(OTP).filter(OTP.email_address == email_address).delete()
         db.commit()
 
-    # Check if user already has a VALID, UNEXPIRED OTP
-    valid_otp = (
-        db.query(OTP)
-        .filter(OTP.email_address == email_address, OTP.expires_at > now)
-        .order_by(OTP.created_at.desc())
-        .first()
-    )
-
-    if valid_otp:
-        # Optional: You can choose to resend the existing OTP instead of generating a new one
-        db.delete(valid_otp)
-        db.commit()
-
-    # Generate a new OTP
     otp_code = generate_otp()
 
-    # Send OTP via email
-    subject = "Your One-Time PIN (OTP)"
-    content = otp_email_template(name, otp_code)
-    asyncio.create_task(send_email_async(email_address, subject, content))
-    # Save OTP to database
+    # Save OTP first
     new_otp = OTP(
         email_address=email_address,
         otp=otp_code,
@@ -46,14 +27,18 @@ def send_email_otp(email_address: str, name: str, resend: bool, db):
     db.add(new_otp)
     db.commit()
 
+    # Send email safely
+    subject = "Your One-Time PIN (OTP)"
+    content = otp_email_template(name, otp_code)
+    try:
+        send_email(email_address, subject, content)
+    except Exception as ex:
+        print("[WARN] Failed to send OTP email:", ex)
+        # don't crash server
+        return {"success": True, "message": "OTP saved but email may not have been sent"}
+
     return {"success": True, "message": "OTP has been sent to your email"}
 
-def send_email_blocking(email_address: str, subject: str, content: str):
-    send_email(email_address, subject, content)
-
-async def send_email_async(email_address: str, subject: str, content: str):
-    loop = asyncio.get_event_loop()
-    await loop.run_in_executor(None, send_email_blocking, email_address, subject, content)
 
 def verify_entered_otp(email_address: str, entered_otp: str, db):
     now = datetime.now(timezone.utc)
@@ -81,8 +66,13 @@ def send_forgot_password_otp(email_address: str, db):
 
     subject = "Your Password Reset OTP"
     content = forgot_password_otp_template(name, otp)
-    asyncio.create_task(send_email_async(email_address, subject, content))
-    
+    try:
+        send_email(email_address, subject, content)
+
+    except Exception as ex:
+        print("[WARN] Failed to send forgot password OTP email:", ex)
+        return {"success": True, "message": "OTP saved but email may not have been sent"}
+
     new_otp = OTP(
         email_address=email_address,
         otp=otp,
