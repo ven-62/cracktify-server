@@ -6,20 +6,20 @@ from config import Config
 
 default_avatar="https://www.gravatar.com/avatar/?d=mp&s=200"
 
-def check_email_unique_service(email: str, db):
+def check_email_unique_service(email_address: str, db):
     """Check if the email is already registered."""
     # Query the database to find a user with the given email
-    user = db.query(User).filter(User.email == email).first()
+    user = db.query(User).filter(User.email_address == email_address).first()
 
     if user:
         return {"success": False, "message": "Email is already registered"} # If email found, return not unique
     
     return {"success": True, "message": "Email is unique"}
 
-def register_user_service(first_name: str, last_name: str, email: str, password: str, db):
+def register_user_service(first_name: str, last_name: str, email_address: str, password: str, db):
     """Register a new user."""
     # Check if user already exists
-    existing_user = db.query(User).filter(User.email == email).first()
+    existing_user = db.query(User).filter(User.email_address == email_address).first()
     if existing_user:
         return {"success": False, "message": "User already exists"}
 
@@ -30,7 +30,7 @@ def register_user_service(first_name: str, last_name: str, email: str, password:
     new_user = User(
         first_name=first_name,
         last_name=last_name,
-        email_address=email,
+        email_address=email_address,
         password_hash=hashed_password,
         avatar_url=default_avatar,
         created_at=datetime.now(timezone.utc),
@@ -55,10 +55,10 @@ def register_user_service(first_name: str, last_name: str, email: str, password:
         }
     }
 
-def login_user_service(email: str, password: str, db):
+def login_user_service(email_address: str, password: str, db):
     """Authenticate a user by email and password."""
     # Find user by email
-    user = db.query(User).filter(User.email_address == email).first()
+    user = db.query(User).filter(User.email_address == email_address).first()
     if not user:
         return {"success": False, "message": "Invalid email or password"}
 
@@ -81,10 +81,10 @@ def login_user_service(email: str, password: str, db):
         }
     }
 
-def forgot_password_service(email: str, new_password: str, db):
+def forgot_password_service(email_address: str, new_password: str, db):
     """Reset user's password."""
     # Find user by email
-    user = db.query(User).filter(User.email_address == email).first()
+    user = db.query(User).filter(User.email_address == email_address).first()
     if not user:
         return {"success": False, "message": "Email not found"}
 
