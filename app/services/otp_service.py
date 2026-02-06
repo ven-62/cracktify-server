@@ -1,5 +1,5 @@
+import asyncio
 from datetime import datetime, timezone, timedelta
-from urllib import response
 from app.models.otp import OTP
 from app.models.user import User
 from app.utils.otp import generate_otp, verify_otp
@@ -35,12 +35,7 @@ def send_email_otp(email_address: str, name: str, resend: bool, db):
     # Send OTP via email
     subject = "Your One-Time PIN (OTP)"
     content = otp_email_template(name, otp_code)
-    response = send_email(email_address, subject, content)
-
-    if not response.get("success"):
-        return {"success": False, "message": "Failed to send OTP"}
-
-
+    asyncio.create_task(send_email_async(email_address, subject, content))
     # Save OTP to database
     new_otp = OTP(
         email_address=email_address,
@@ -52,6 +47,13 @@ def send_email_otp(email_address: str, name: str, resend: bool, db):
     db.commit()
 
     return {"success": True, "message": "OTP has been sent to your email"}
+
+def send_email_blocking(email_address: str, subject: str, content: str):
+    send_email(email_address, subject, content)
+
+async def send_email_async(email_address: str, subject: str, content: str):
+    loop = asyncio.get_event_loop()
+    await loop.run_in_executor(None, send_email_blocking, email_address, subject, content)
 
 def verify_entered_otp(email_address: str, entered_otp: str, db):
     now = datetime.now(timezone.utc)
@@ -79,10 +81,7 @@ def send_forgot_password_otp(email_address: str, db):
 
     subject = "Your Password Reset OTP"
     content = forgot_password_otp_template(name, otp)
-    response = send_email(email_address, subject, content)
-    if not response.get("success"):
-        return {"success": False, "message": "Failed to send OTP"}
-
+    asyncio.create_task(send_email_async(email_address, subject, content))
     
     new_otp = OTP(
         email_address=email_address,
