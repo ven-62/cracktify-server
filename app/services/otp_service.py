@@ -15,9 +15,20 @@ def send_email_otp(email_address: str, name: str, resend: bool, db):
         db.query(OTP).filter(OTP.email_address == email_address).delete()
         db.commit()
 
+    # Delete any existing valid OTP
+    valid_otp = (
+        db.query(OTP)
+        .filter(OTP.email_address == email_address, OTP.expires_at > now)
+        .order_by(OTP.created_at.desc())
+        .first()
+    )
+    if valid_otp:
+        db.delete(valid_otp)
+        db.commit()
+
     otp_code = generate_otp()
 
-    # Save OTP first
+    # Save OTP to DB **first**
     new_otp = OTP(
         email_address=email_address,
         otp=otp_code,
@@ -27,17 +38,15 @@ def send_email_otp(email_address: str, name: str, resend: bool, db):
     db.add(new_otp)
     db.commit()
 
-    # Send email safely
+    # Send email synchronously
     subject = "Your One-Time PIN (OTP)"
     content = otp_email_template(name, otp_code)
-    try:
-        send_email(email_address, subject, content)
-    except Exception as ex:
-        print("[WARN] Failed to send OTP email:", ex)
-        # don't crash server
-        return {"success": True, "message": "OTP saved but email may not have been sent"}
+    response = send_email(email_address, subject, content)  # this is blocking
+    if not response.get("success"):
+        return {"success": False, "message": response.get("message", "Failed to send OTP")}
 
     return {"success": True, "message": "OTP has been sent to your email"}
+
 
 
 def verify_entered_otp(email_address: str, entered_otp: str, db):
