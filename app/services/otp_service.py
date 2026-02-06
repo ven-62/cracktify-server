@@ -43,8 +43,11 @@ def send_email_otp(email_address: str, name: str, resend: bool, db):
     # Send OTP via email
     subject = "Your One-Time PIN (OTP)"
     content = otp_email_template(name, otp_code)
-    send_email(email_address, subject, content)
-
+    response = send_email(email_address, subject, content)
+    
+    if not response.get("success"):
+        return {"success": False, "message": f"Failed to send OTP email: {response.get('message')}"}
+    
     return {"success": True, "message": "OTP has been sent to your email"}
 
 def verify_entered_otp(email_address: str, entered_otp: str, db):

@@ -22,10 +22,7 @@ def send_email(receiver_email, subject, message):
         server.sendmail(SENDER_EMAIL, receiver_email, msg.as_string())
         server.quit()
 
-        print("Email sent successfully!")
+        return {"success": True, "message": "Email sent successfully"}
 
     except Exception as e:
-        print("Error sending email:", e)
-
-if __name__ == "__main__":
-    send_email("venlavapie62@gmail.com", "Test Email from FastAPI", "<h1>This is a test email sent from FastAPI!</h1><p>It works!</p>")
+        return {"success": False, "message": f"Failed to send email: {str(e)}"}
