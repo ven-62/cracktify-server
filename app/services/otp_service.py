@@ -1,4 +1,5 @@
 from datetime import datetime, timezone, timedelta
+from urllib import response
 from app.models.otp import OTP
 from app.models.user import User
 from app.utils.otp import generate_otp, verify_otp
@@ -23,12 +24,22 @@ def send_email_otp(email_address: str, name: str, resend: bool, db):
         .first()
     )
 
-    if valid_otp and not resend:
-        # Ignore and return success but clarify nothing was sent
-        return {"success": True, "message": "Valid OTP already exists. No new OTP sent."}
+    if valid_otp:
+        # Optional: You can choose to resend the existing OTP instead of generating a new one
+        db.delete(valid_otp)
+        db.commit()
 
     # Generate a new OTP
     otp_code = generate_otp()
+
+    # Send OTP via email
+    subject = "Your One-Time PIN (OTP)"
+    content = otp_email_template(name, otp_code)
+    response = send_email(email_address, subject, content)
+
+    if not response.get("success"):
+        return {"success": False, "message": "Failed to send OTP"}
+
 
     # Save OTP to database
     new_otp = OTP(
@@ -40,14 +51,6 @@ def send_email_otp(email_address: str, name: str, resend: bool, db):
     db.add(new_otp)
     db.commit()
 
-    # Send OTP via email
-    subject = "Your One-Time PIN (OTP)"
-    content = otp_email_template(name, otp_code)
-    response = send_email(email_address, subject, content)
-    
-    if not response.get("success"):
-        return {"success": False, "message": f"Failed to send OTP email: {response.get('message')}"}
-    
     return {"success": True, "message": "OTP has been sent to your email"}
 
 def verify_entered_otp(email_address: str, entered_otp: str, db):
@@ -74,6 +77,13 @@ def send_forgot_password_otp(email_address: str, db):
     name = user.first_name
     otp = generate_otp()
 
+    subject = "Your Password Reset OTP"
+    content = forgot_password_otp_template(name, otp)
+    response = send_email(email_address, subject, content)
+    if not response.get("success"):
+        return {"success": False, "message": "Failed to send OTP"}
+
+    
     new_otp = OTP(
         email_address=email_address,
         otp=otp,
@@ -83,9 +93,5 @@ def send_forgot_password_otp(email_address: str, db):
 
     db.add(new_otp)
     db.commit()
-
-    subject = "Your Password Reset OTP"
-    content = forgot_password_otp_template(name, otp)
-    send_email(email_address, subject, content)
 
     return {"success": True, "message": "OTP has been sent to your email"}

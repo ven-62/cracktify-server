@@ -1,9 +1,9 @@
 import random
+import secrets
 from datetime import datetime, timezone
 
 def generate_otp():
-    return str(
-        [random.randint(0, 9) for _ in range(6)]).replace("[", "").replace("]", "").replace(",", "").replace(" ", "")
+    return "".join(str(secrets.randbelow(10)) for _ in range(6))
 
 def verify_otp(last_otp, entered_otp, datenow):
     if not last_otp:
