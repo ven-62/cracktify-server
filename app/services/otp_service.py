@@ -48,6 +48,20 @@ def send_email_otp(email_address: str, name: str, resend: bool, db):
 
     return {"success": True, "message": "OTP has been sent to your email"}
 
+def verify_entered_otp(email_address: str, entered_otp: str, db):
+    now = datetime.now(timezone.utc)
+
+    # Get the latest OTP for this email
+    last_otp = db.query(OTP).filter(OTP.email_address == email_address).order_by(OTP.created_at.desc()).first()
+
+    if not verify_otp(last_otp, entered_otp, now):
+        return {"success": False, "message": "Invalid OTP"}
+
+    # Optional: delete the OTP after successful verification
+    db.delete(last_otp)
+    db.commit()
+
+    return {"success": True, "message": "Email has been verified"}
 
 def send_forgot_password_otp(email_address: str, db):
     user = db.query(User).filter(User.email_address == email_address).first()
