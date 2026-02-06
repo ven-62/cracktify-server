@@ -20,7 +20,6 @@ greenlet==3.3.1
 h11==0.16.0
 httplib2==0.31.2
 idna==3.11
-jwt==1.4.0
 mysqlclient==2.2.7
 oauthlib==3.3.1
 proto-plus==1.27.1
