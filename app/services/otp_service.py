@@ -2,7 +2,7 @@ from datetime import datetime, timezone, timedelta
 from app.models.otp import OTP
 from app.models.user import User
 from app.utils.otp import generate_otp, verify_otp
-from app.utils.email import send_email
+from app.utils.email_util import send_email
 from app.templates.otp_template import otp_email_template, forgot_password_otp_template
 
 OTP_EXPIRATION_MINUTES = 5
