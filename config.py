@@ -1,6 +1,8 @@
 import os, json, base64
 from dotenv import load_dotenv
 
+import cloudinary
+
 # Load .env file
 load_dotenv()
 
@@ -24,6 +26,9 @@ class Config:
     JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 
     # Cloudinary Settings
+    CLOUDINARY_CLOUD_NAME = os.getenv("CLOUDINARY_CLOUD_NAME")
+    CLOUDINARY_API_KEY = os.getenv("CLOUDINARY_API_KEY")
     CLOUDINARY_SECRET_KEY = os.getenv("CLOUDINARY_SECRET_KEY")
 
     DEFAULT_BASE64_AVATAR = os.getenv("DEFAULT_BASE64_AVATAR", "")
+

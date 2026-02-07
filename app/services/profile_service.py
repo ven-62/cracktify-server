@@ -1,10 +1,9 @@
 from datetime import datetime, timezone
 from app.models.user import User
 from app.utils.password import hash_password, verify_password
-from app.utils.pdf import generate_user_pdf
 
 
-def update_profile(profile_data: dict, new_password, db):
+def update_profile(profile_data: dict, db):
     """Update user profile with provided data"""
     user_id = profile_data.get("id")
 
@@ -16,14 +15,10 @@ def update_profile(profile_data: dict, new_password, db):
         if hasattr(user, key):
             setattr(user, key, value)
 
-    if new_password:
-        user.password_hash = hash_password(new_password)
-
     user.updated_at = datetime.now(timezone.utc)
 
     db.commit()
     db.refresh(user)
-    print("Updated user profile:", user)
 
     return {"success": True, "user": user}
 
@@ -39,31 +34,21 @@ def verify_user_password(user_id: int, old_password: str, db):
     else:
         return {"success": False, "error": "Incorrect password"}
 
-
-def download_data(user_id: int, db):
-    """Download user data"""
+def update_password(user_id: int, new_password: str, db):
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         return {"success": False, "error": "User not found"}
+    
+    hashed_password = hash_password(new_password)
 
-    generated_pdf_path = f"user_{user_id}_data.pdf"
-    generate_user_pdf(
-        {
-            "id": user.id,
-            "first_name": user.first_name,
-            "last_name": user.last_name,
-            "email_address": user.email_address,
-            "joined_at": user.created_at.strftime("%Y-%m-%d"),
-            # "scans_done": user.scans_done,
-            # "cracks_detected": user.cracks_detected,
-            # "last_scan": user.last_scan.strftime("%Y-%m-%d") if user.last_scan else "N/A",
-        },
-        output_path=generated_pdf_path
-    )
-    with open(generated_pdf_path, "rb") as pdf_file:
-        pdf_content = pdf_file.read()
+    user.password_hash = hashed_password
 
-    return pdf_content
+    db.commit()
+    db.refresh(user)
+
+    return {
+        "success": False, "message": "Password updated"
+    }
 
 
 def delete_account(user_id: int, password: str, db):
