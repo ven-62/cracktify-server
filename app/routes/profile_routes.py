@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, Body
 from fastapi.responses import FileResponse, StreamingResponse
 from sqlalchemy.orm import Session
 from app.database.db import get_db
-from app.services.profile_service import update_profile, verify_user_password, update_password, download_data, delete_account
+from app.services.profile_service import update_profile, verify_user_password, update_password, delete_account
 
 router = APIRouter()
 
@@ -27,4 +27,11 @@ def api_update_password(data: dict = Body(...), db: Session = Depends(get_db)):
     user_id = data.get("id")
     new_password = data.get("new_password")
 
-    return update_password(user_id, new_password)
+    return update_password(user_id, new_password, db)
+
+@router.post("/delete_account/{user_id}")
+def api_delete_account(data: dict = Body(...), db: Session = Depends(get_db)):
+    user_id = data.get("id")
+    password = data.get("password")
+
+    return delete_account(user_id, password, db)
