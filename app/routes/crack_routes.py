@@ -5,14 +5,14 @@ from app.services.crack_service import fetch_cracks_service, add_crack_service
 
 router = APIRouter()
 
-@router.post("/fetch-cracks")
+@router.post("/fetch")
 def api_fetch_cracks(data: dict = Body(...), db: Session = Depends(get_db)):
-    """Endpoint to fetch cracks for a specific group."""
-    group_id = data.get("group_id")
+    """Endpoint to fetch cracks for a specific user."""
+    user_id = data.get("user_id")
     
-    return fetch_cracks_service(group_id, db)
+    return fetch_cracks_service(user_id, db)
 
-@router.post("/add-crack")
+@router.post("/add")
 def api_add_crack(data: dict = Body(...), db: Session = Depends(get_db)):
     """Endpoint to add a new crack."""
     user_id = data.get("user_id")
