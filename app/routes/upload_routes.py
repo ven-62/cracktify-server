@@ -3,7 +3,7 @@ import shutil
 import tempfile
 
 from fastapi import APIRouter, File, UploadFile, HTTPException
-from app.utils.uploads import upload_image
+from app.utils.uploads import upload_file
 
 router = APIRouter()
 
@@ -19,7 +19,7 @@ async def handle_upload_file(file: UploadFile = File(...)):
             temp_file_path = temp_file.name
 
         # Upload to Cloudinary
-        result = upload_image(temp_file_path)
+        result = upload_file(temp_file_path)
 
         return {
             "success": True,
