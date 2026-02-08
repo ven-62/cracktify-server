@@ -4,7 +4,7 @@ from app.utils.password import hash_password, verify_password
 from app.utils.token_generator import generate_jwt
 from config import Config
 
-default_avatar="https://www.gravatar.com/avatar/?d=mp&s=200"
+DEFAULT_AVATAR="https://www.gravatar.com/avatar/?d=mp&s=200"
 
 def check_email_unique_service(email_address: str, db):
     """Check if the email is already registered."""
@@ -32,7 +32,7 @@ def register_user_service(first_name: str, last_name: str, email_address: str, p
         last_name=last_name,
         email_address=email_address,
         password_hash=hashed_password,
-        avatar_url=default_avatar,
+        avatar_url=DEFAULT_AVATAR,
         created_at=datetime.now(timezone.utc),
         updated_at=datetime.now(timezone.utc)
     )

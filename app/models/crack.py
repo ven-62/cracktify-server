@@ -8,7 +8,7 @@ class Crack(Base):
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"))
-    image_url = Column(Text, nullable=False)
+    file_url = Column(Text, nullable=False)
     probability = Column(Float)
     severity = Column(String(50))
     detected_at = Column(DateTime, default=datetime.now(timezone.utc))
@@ -19,9 +19,8 @@ class Crack(Base):
         return {
             "id": self.id,
             "user_id": self.user_id,
-            "image_url": self.image_url,
+            "file_url": self.file_url,
             "probability": self.probability,
             "severity": self.severity,
             "detected_at": self.detected_at.isoformat(),
         }
-

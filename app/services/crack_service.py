@@ -15,7 +15,7 @@ def fetch_cracks_service(user_id: int, db):
         "cracks": [crack.to_dict() for crack in cracks]
     }
 
-def add_crack_service(user_id: int, image_url: str, probability: float, severity: str, db):
+def add_crack_service(user_id: int, file_url: str, probability: float, severity: str, db):
     """Add a crack for a specific user."""
 
     # Validate user
@@ -26,7 +26,7 @@ def add_crack_service(user_id: int, image_url: str, probability: float, severity
     # Create crack record
     new_crack = Crack(
         user_id=user_id,
-        image_url=image_url,
+        file_url=file_url,
         probability=probability,
         severity=severity,
         detected_at=datetime.now(timezone.utc)
