@@ -16,9 +16,9 @@ def api_fetch_cracks(data: dict = Body(...), db: Session = Depends(get_db)):
 def api_add_crack(data: dict = Body(...), db: Session = Depends(get_db)):
     """Endpoint to add a new crack."""
     user_id = data.get("user_id")
-    image_base64 = data.get("image_base64")
+    file_url = data.get("file_url")
     probability = data.get("probability")
     severity = data.get("severity")
     
-    return add_crack_service(user_id, image_base64, probability, severity, db)
+    return add_crack_service(user_id, file_url, probability, severity, db)
 
