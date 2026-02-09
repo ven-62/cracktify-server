@@ -20,7 +20,15 @@ def update_profile(profile_data: dict, db):
     db.commit()
     db.refresh(user)
 
-    return {"success": True, "user": user}
+    user_data  = {
+        "id": user.id,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "email_address": user.email_address,
+        "avatar_url": user.avatar_url
+    }
+
+    return {"success": True, "user": user_data}
 
 def get_user(user_id: int, db):
     """Retrieve user profile by ID"""
@@ -28,7 +36,14 @@ def get_user(user_id: int, db):
     if not user:
         return {"success": False, "error": "User not found"}
 
-    return {"success": True, "user": user}
+    user_data  = {
+        "id": user.id,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "email_address": user.email_address,
+        "avatar_url": user.avatar_url
+    }
+    return {"success": True, "user": user_data}
 
 def verify_user_password(user_id: int, old_password: str, db):
     """Verify if the provided password matches the user's password"""
@@ -54,7 +69,7 @@ def update_password(user_id: int, new_password: str, db):
     db.refresh(user)
 
     return {
-        "success": False, "message": "Password updated"
+        "success": True, "message": "Password updated"
     }
 
 
