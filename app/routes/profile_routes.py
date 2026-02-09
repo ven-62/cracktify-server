@@ -17,9 +17,7 @@ def api_update_profile(data: dict = Body(...), db: Session = Depends(get_db)):
     return update_profile(profile_data, db)
 
 @router.get("/{user_id}")
-def api_get_profile(data: dict = Body(...), db: Session = Depends(get_db)):
-    user_id = data.get("id")
-    
+def api_get_profile(user_id: int, db: Session = Depends(get_db)):
     return get_user(user_id, db)
 
 @router.post("/verify_password/{user_id}")
