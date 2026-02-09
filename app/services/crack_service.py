@@ -4,16 +4,19 @@ from app.models.crack import Crack
 
 def fetch_cracks_service(user_id: int, db):
     """Fetch cracks for a specific user."""
-    cracks = db.query(Crack).filter(Crack.user_id == user_id).all()
+    try:
+        cracks = db.query(Crack).filter(Crack.user_id == user_id).all()
 
-    if not cracks:
-        return {"success": False, "message": "No cracks found for this user"}
-
-    return {
-        "success": True,
-        "message": "Cracks fetched successfully",
-        "cracks": [crack.to_dict() for crack in cracks]
-    }
+        return {
+            "success": True,
+            "message": "Cracks fetched successfully",
+            "cracks": [crack.to_dict() for crack in cracks]
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "message": f"Error fetching cracks: {str(e)}"
+        }
 
 def add_crack_service(user_id: int, file_url: str, probability: float, severity: str, db):
     """Add a crack for a specific user."""
