@@ -1,11 +1,12 @@
 from ast import Dict
 import io
+import re
 from typing import Any
 from fastapi import APIRouter, Depends, Body
 from fastapi.responses import FileResponse, StreamingResponse
 from sqlalchemy.orm import Session
 from app.database.db import get_db
-from app.services.profile_service import update_profile, verify_user_password, update_password, delete_account
+from app.services.profile_service import update_profile, verify_user_password, get_user, update_password, delete_account
 
 router = APIRouter()
 
@@ -14,6 +15,12 @@ def api_update_profile(data: dict = Body(...), db: Session = Depends(get_db)):
     profile_data = data.get("profile_data", {})
 
     return update_profile(profile_data, db)
+
+@router.get("/{user_id}")
+def api_get_profile(data: dict = Body(...), db: Session = Depends(get_db)):
+    user_id = data.get("id")
+    
+    return get_user(user_id, db)
 
 @router.post("/verify_password/{user_id}")
 def api_verify_user_password(data: dict = Body(...), db: Session = Depends(get_db)):

@@ -22,6 +22,13 @@ def update_profile(profile_data: dict, db):
 
     return {"success": True, "user": user}
 
+def get_user(user_id: int, db):
+    """Retrieve user profile by ID"""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        return {"success": False, "error": "User not found"}
+
+    return {"success": True, "user": user}
 
 def verify_user_password(user_id: int, old_password: str, db):
     """Verify if the provided password matches the user's password"""
