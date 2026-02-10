@@ -2,7 +2,7 @@ import tempfile
 from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from app.database.db import engine, Base
-from app.routes import otp_routes, auth_routes, profile_routes, activity_routes, crack_routes, upload_routes
+from app.routes import otp_routes, auth_routes, profile_routes, crack_routes, upload_routes
 
 import app.models 
 
