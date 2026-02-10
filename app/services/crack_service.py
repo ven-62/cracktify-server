@@ -2,8 +2,6 @@ from datetime import datetime, timezone
 from app.models.user import User
 from app.models.crack import Crack
 
-from utils.uploads import upload_file
-
 def fetch_cracks_service(user_id: int, db):
     """Fetch cracks for a specific user."""
     try:
@@ -13,7 +11,7 @@ def fetch_cracks_service(user_id: int, db):
         # TODO: Add more crack types in the future and update this logic accordingly
         total_severe_cracks = sum(1 for crack in cracks if crack.severity == "Severe")
         total_mild_cracks = sum(1 for crack in cracks if crack.severity == "Mild")
-        total_none_cracks = sum(1 for crack in cracks if crack.severity == "None")
+        total_none_cracks = sum(1 for crack in cracks if crack.severity == "Low")
 
         return {
             "success": True,
@@ -33,7 +31,7 @@ def fetch_cracks_service(user_id: int, db):
         }
 def detect_crack_service(file_url: str, confidence_threshold: float, db):
     # This function is now handled by the CrackClassifier's analyze_and_save method, which returns the confidence and saves the image with the appropriate filename. The service layer can then call that method and extract the confidence from the filename if needed for further processing or database storage.
-    from utils.crack_classifier import CrackClassifier
+    from app.services.crack_classifier import CrackClassifier
     from pathlib import Path
 
     classifier_path = Path(__file__).parent.parent / "assets" / "model" / "crackAI.tflite"
