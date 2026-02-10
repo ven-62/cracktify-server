@@ -10,7 +10,7 @@ import tempfile
 import requests
 from urllib.parse import urlparse
 
-from app.utils.uploads import upload_file
+from utils.uploads import upload_file
 
 # from services.crack_service import add_crack_service
 
