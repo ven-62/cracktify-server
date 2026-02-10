@@ -5,12 +5,24 @@ from app.models.crack import Crack
 def fetch_cracks_service(user_id: int, db):
     """Fetch cracks for a specific user."""
     try:
-        cracks = db.query(Crack).filter(Crack.user_id == user_id).all()
+        cracks = db.query(Crack).filter(Crack.user_id == user_id).order_by(Crack.detected_at.desc()).all()
+
+        total_cracks = len(cracks)
+        # TODO: Add more crack types in the future and update this logic accordingly
+        total_severe_cracks = sum(1 for crack in cracks if crack.severity == "Severe")
+        total_mild_cracks = sum(1 for crack in cracks if crack.severity == "Mild")
+        total_none_cracks = sum(1 for crack in cracks if crack.severity == "None")
 
         return {
             "success": True,
             "message": "Cracks fetched successfully",
-            "cracks": [crack.to_dict() for crack in cracks]
+            "cracks": [crack.to_dict() for crack in cracks],
+            "stats": {
+                "total_cracks": total_cracks,
+                "total_severe_cracks": total_severe_cracks,
+                "total_mild_cracks": total_mild_cracks,
+                "total_none_cracks": total_none_cracks,
+            }
         }
     except Exception as e:
         return {
