@@ -30,50 +30,32 @@ class CrackClassifier:
         self._lock = threading.Lock()
 
 
-    def _resolve_image_path(self, image_input) -> str:
+    def _resolve_image_path(self, image_input: str) -> str:
         """
-        Accepts:
-        - local file path (str)
-        - URL (str)
-        - FastAPI UploadFile
-        - bytes
-        Returns a LOCAL file path
+        Downloads an image from a URL and saves it to a temp file.
+        Returns the local file path.
         """
 
-        # UploadFile (FastAPI)
-        if hasattr(image_input, "file"):
-            suffix = ".jpg"
-            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
-            image_input.file.seek(0)
-            temp_file.write(image_input.file.read())
-            temp_file.close()
-            return temp_file.name
+        parsed = urlparse(image_input)
 
-        # Raw bytes
-        if isinstance(image_input, (bytes, bytearray)):
-            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg")
-            temp_file.write(image_input)
-            temp_file.close()
-            return temp_file.name
+        if parsed.scheme not in ("http", "https"):
+            raise ValueError(f"Invalid URL: {image_input}")
 
-        # String path or URL
-        if isinstance(image_input, str):
-            parsed = urlparse(image_input)
+        try:
+            response = requests.get(image_input, timeout=10)
+            response.raise_for_status()
 
-            if parsed.scheme in ("http", "https"):
-                response = requests.get(image_input, timeout=10)
-                response.raise_for_status()
+            suffix = os.path.splitext(parsed.path)[1]
+            if suffix.lower() not in (".jpg", ".jpeg", ".png", ".webp"):
+                suffix = ".jpg"
 
-                suffix = os.path.splitext(parsed.path)[1] or ".jpg"
-                temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
+            with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
                 temp_file.write(response.content)
-                temp_file.close()
                 return temp_file.name
 
-            return image_input
-
-        raise TypeError(f"Unsupported image input type: {type(image_input)}")
-
+        except Exception as e:
+            raise RuntimeError(f"Failed to download image: {image_input}") from e
+        
 
     # ---------- PREPROCESS FUNCTIONS ----------
     def _mobilenet_standard_scaling(self, image_array_rgb):
