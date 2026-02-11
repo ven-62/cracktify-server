@@ -60,7 +60,7 @@ class CrackClassifier:
         x -= 1.0
         return x
 
-    def _preprocess_image(self, image_path, target_size=(256, 256)):
+    def _preprocess_image(self, image_path, target_size=(128, 128)):
         if not image_path or not os.path.exists(image_path):
             raise FileNotFoundError(f"Invalid image path: {image_path}")
 
