@@ -16,18 +16,13 @@ DATABASE_URL = (
     f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 )
 
-print("MYSQLHOST =", os.getenv("MYSQLHOST"))
-print("MYSQLPORT =", os.getenv("MYSQLPORT"))
-print("MYSQLUSER =", os.getenv("MYSQLUSER"))
-print("MYSQLDATABASE =", os.getenv("MYSQLDATABASE"))
-
 # Engine and session
 engine = create_engine(
     url=DATABASE_URL,
     connect_args={"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {},
     pool_pre_ping=True,
     pool_recycle=300,
-    echo=True,  # Set to False in production
+    echo=False,
     future=True
 )
 

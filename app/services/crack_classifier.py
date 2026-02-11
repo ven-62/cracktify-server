@@ -1,20 +1,16 @@
-import tensorflow as tf
-import numpy as np
-from PIL import Image
 import os
+import requests
+import threading
+import numpy as np
 import cv2
-
-from fastapi import UploadFile
+import tensorflow as tf
+from urllib.parse import urlparse
+from PIL import Image
 
 import tempfile
-import requests
-from urllib.parse import urlparse
 
 from app.utils.uploads import upload_file
 
-import threading
-
-# from services.crack_service import add_crack_service
 
 class CrackClassifier:
     def __init__(self, model_path: str):
@@ -64,7 +60,7 @@ class CrackClassifier:
         x -= 1.0
         return x
 
-    def _preprocess_image(self, image_path, target_size=(128, 128)):
+    def _preprocess_image(self, image_path, target_size=(256, 256)):
         if not image_path or not os.path.exists(image_path):
             raise FileNotFoundError(f"Invalid image path: {image_path}")
 
@@ -158,7 +154,7 @@ class CrackClassifier:
             if prob >= 0.8:
                 severity = "High"
             elif prob >= 0.4:
-                severity = "Medium"
+                severity = "Mild"
             else:
                 severity = "Low"
 

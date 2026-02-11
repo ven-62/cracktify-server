@@ -19,7 +19,3 @@ def verify_otp(last_otp, entered_otp, datenow):
 
     return last_otp.otp == entered_otp
 
-
-if __name__ == "__main__":
-    otp = generate_otp()
-    print(f"Generated OTP: {otp}")

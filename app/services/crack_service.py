@@ -9,9 +9,9 @@ def fetch_cracks_service(user_id: int, db):
 
         total_cracks = len(cracks)
         # TODO: Add more crack types in the future and update this logic accordingly
-        total_severe_cracks = sum(1 for crack in cracks if crack.severity == "Severe")
+        total_high_cracks = sum(1 for crack in cracks if crack.severity == "High")
         total_mild_cracks = sum(1 for crack in cracks if crack.severity == "Mild")
-        total_none_cracks = sum(1 for crack in cracks if crack.severity == "Low")
+        total_low_cracks = sum(1 for crack in cracks if crack.severity == "Low")
 
         return {
             "success": True,
@@ -19,9 +19,9 @@ def fetch_cracks_service(user_id: int, db):
             "cracks": [crack.to_dict() for crack in cracks],
             "stats": {
                 "total_cracks": total_cracks,
-                "total_severe_cracks": total_severe_cracks,
+                "total_high_cracks": total_high_cracks,
                 "total_mild_cracks": total_mild_cracks,
-                "total_none_cracks": total_none_cracks,
+                "total_low_cracks": total_low_cracks,
             }
         }
     except Exception as e:

@@ -1,7 +1,2 @@
 .env
-.vercel
-
 __pycache__/
-
-credentials.json
-token.json

@@ -13,7 +13,7 @@ def otp_email_template(name: str, otp: str) -> str:
                     <p>Enter this code in the app to verify your email address. This code will expire in 5 minutes.</p>
                 </div>
                 <div style="background-color:#f0f2f5; text-align:center; padding:20px; font-size:12px; color:#888888;">
-                    &copy; 2025 Cracktify. All rights reserved.
+                    &copy; 2026 Cracktify. All rights reserved.
                 </div>
             </div>
         </div>
@@ -34,7 +34,7 @@ def forgot_password_otp_template(name: str, otp: str) -> str:
                     <p>If you did not request a password reset, please ignore this email.</p>
                 </div>
                 <div style="background-color:#f0f2f5; text-align:center; padding:20px; font-size:12px; color:#888888;">
-                    &copy; 2025 Cracktify. All rights reserved.
+                    &copy; 2026 Cracktify. All rights reserved.
                 </div>
             </div>
         </div>
