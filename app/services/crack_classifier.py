@@ -3,14 +3,16 @@ import numpy as np
 from PIL import Image
 import os
 import cv2
-import sys
-from datetime import datetime
+
+from fastapi import UploadFile
 
 import tempfile
 import requests
 from urllib.parse import urlparse
 
 from app.utils.uploads import upload_file
+
+import threading
 
 # from services.crack_service import add_crack_service
 
@@ -19,34 +21,59 @@ class CrackClassifier:
         """
         Constructor: loads the TFLite model ONCE.
         """
-        self.interpreter = tf.lite.Interpreter(model_path=model_path)
+        self.interpreter = tf.lite.Interpreter(model_path=model_path, num_threads=1)
         self.interpreter.allocate_tensors()
 
         self.input_details  = self.interpreter.get_input_details()
         self.output_details = self.interpreter.get_output_details()
 
-    def _resolve_image_path(self, image_path: str) -> str:
+        self._lock = threading.Lock()
+
+
+    def _resolve_image_path(self, image_input) -> str:
         """
-        Accepts a local path OR a URL.
-        If URL, downloads to a temp file and returns local path.
+        Accepts:
+        - local file path (str)
+        - URL (str)
+        - FastAPI UploadFile
+        - bytes
+        Returns a LOCAL file path
         """
-        parsed = urlparse(image_path)
 
-        # If it's a URL
-        if parsed.scheme in ("http", "https"):
-            response = requests.get(image_path, timeout=10)
-            response.raise_for_status()
-
-            suffix = os.path.splitext(parsed.path)[1] or ".jpg"
-
+        # UploadFile (FastAPI)
+        if hasattr(image_input, "file"):
+            suffix = ".jpg"
             temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
-            temp_file.write(response.content)
+            image_input.file.seek(0)
+            temp_file.write(image_input.file.read())
             temp_file.close()
-
             return temp_file.name
 
-        # Otherwise assume local file
-        return image_path
+        # Raw bytes
+        if isinstance(image_input, (bytes, bytearray)):
+            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg")
+            temp_file.write(image_input)
+            temp_file.close()
+            return temp_file.name
+
+        # String path or URL
+        if isinstance(image_input, str):
+            parsed = urlparse(image_input)
+
+            if parsed.scheme in ("http", "https"):
+                response = requests.get(image_input, timeout=10)
+                response.raise_for_status()
+
+                suffix = os.path.splitext(parsed.path)[1] or ".jpg"
+                temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
+                temp_file.write(response.content)
+                temp_file.close()
+                return temp_file.name
+
+            return image_input
+
+        raise TypeError(f"Unsupported image input type: {type(image_input)}")
+
 
     # ---------- PREPROCESS FUNCTIONS ----------
     def _mobilenet_standard_scaling(self, image_array_rgb):
@@ -56,23 +83,29 @@ class CrackClassifier:
         return x
 
     def _preprocess_image(self, image_path, target_size=(128, 128)):
-        img = Image.open(image_path).convert("RGB")
+        if not image_path or not os.path.exists(image_path):
+            raise FileNotFoundError(f"Invalid image path: {image_path}")
+
+        try:
+            img = Image.open(image_path).convert("RGB")
+        except Exception as e:
+            raise RuntimeError(f"PIL failed to open image: {image_path}") from e
+
         img = img.resize(target_size, Image.Resampling.LANCZOS)
         img_array = np.array(img)
         return self._mobilenet_standard_scaling(img_array)
 
+
     # ---------- PREDICT FUNCTION ----------
     def predict(self, image_path: str) -> float:
-        """
-        image_path MUST be a local file path
-        """
         img = self._preprocess_image(image_path)
         img = np.expand_dims(img, axis=0)
 
-        self.interpreter.set_tensor(self.input_details[0]['index'], img)
-        self.interpreter.invoke()
+        with self._lock:
+            self.interpreter.set_tensor(self.input_details[0]['index'], img)
+            self.interpreter.invoke()
+            output = self.interpreter.get_tensor(self.output_details[0]['index'])
 
-        output = self.interpreter.get_tensor(self.output_details[0]['index'])
         return float(output[0][0])
 
         
