@@ -29,17 +29,26 @@ def fetch_cracks_service(user_id: int, db):
             "success": False,
             "message": f"Error fetching cracks: {str(e)}"
         }
-def detect_crack_service(file_url: str, confidence_threshold: float, db):
+def detect_crack_service(file_info: str, confidence_threshold: float, db):
     # This function is now handled by the CrackClassifier's analyze_and_save method, which returns the confidence and saves the image with the appropriate filename. The service layer can then call that method and extract the confidence from the filename if needed for further processing or database storage.
     from app.services.crack_classifier import CrackClassifier
     from pathlib import Path
 
-    classifier_path = Path(__file__).parent.parent / "assets" / "model" / "crackAI.tflite"
-    
-    classifier = CrackClassifier(classifier_path)
+    file_url = file_info.get("file_url")
+    file_type = file_info.get("type")
 
-    result = classifier.analyze_and_save(file_url, confidence_threshold)
-    return result
+    if file_type == "image":
+        # If the file is an image, perform image classifier
+        classifier_path = Path(__file__).parent.parent / "assets" / "model" / "crackAI.tflite"
+        
+        classifier = CrackClassifier(classifier_path)
+        result = classifier.analyze_and_save(file_url, confidence_threshold)
+
+        return result
+    
+    elif file_type == "video":
+        # Else, if file is a video, perform video classifier
+        pass
 
 def add_crack_service(user_id: int, file_url: str, probability: float, severity: str, db):
     """Add a crack for a specific user."""
