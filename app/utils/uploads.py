@@ -15,7 +15,7 @@ cloudinary.config(
 def upload_file(file_path, public_id=None):
     """Uploads a file to Cloudinary."""
     if public_id:
-        result = cloudinary.uploader.upload(file_path, public_id=public_id, resource_type="auto")
+        result = cloudinary.uploader.upload(file_path, public_id=public_id, use_filename=True, resource_type="auto")
     else:
-        result = cloudinary.uploader.upload(file_path, resource_type="auto")
+        result = cloudinary.uploader.upload(file_path, use_filename=True, resource_type="auto")
     return result

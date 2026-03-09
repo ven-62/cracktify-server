@@ -24,7 +24,7 @@ async def handle_upload_file(file: UploadFile = File(...)):
         return {
             "success": True,
             "url": result["secure_url"],
-            "filename": result["filename"],
+            "filename": result["public_id"] + "." + result["format"],
             "type": result["resource_type"],
         }
 
