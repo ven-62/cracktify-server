@@ -2,10 +2,15 @@ from datetime import datetime, timezone
 from app.models.user import User
 from app.models.crack import Crack
 
-def fetch_cracks_service(user_id: int, db):
+def fetch_cracks_service(user_id: int, db, limit):
     """Fetch cracks for a specific user."""
     try:
-        cracks = db.query(Crack).filter(Crack.user_id == user_id).order_by(Crack.detected_at.desc()).all()
+        query = db.query(Crack).filter(Crack.user_id == user_id)
+
+        if limit and limit > 0: # If limit is provided and greater than 0, apply the limit to the query
+            query = query.order_by(Crack.detected_at.desc()).limit(limit)
+        
+        cracks = query.all()
 
         total_cracks = len(cracks)
         # TODO: Add more crack types in the future and update this logic accordingly
@@ -75,3 +80,17 @@ def add_crack_service(user_id: int, file_url: str, probability: float, severity:
         "message": "Crack added successfully",
         "crack_id": new_crack.id
     }
+
+def delete_crack_service(crack_id: int, db):
+    """Delete a crack by its ID."""
+    try:
+        crack = db.query(Crack).filter(Crack.id == crack_id).first()
+        if not crack:
+            return {"success": False, "message": "Crack not found"}
+
+        db.delete(crack)
+        db.commit()
+
+        return {"success": True, "message": "Crack deleted successfully"}
+    except Exception as e:
+        return {"success": False, "message": f"Error deleting crack: {str(e)}"}
