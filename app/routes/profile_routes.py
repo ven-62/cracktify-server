@@ -27,16 +27,16 @@ def api_verify_user_password(data: dict = Body(...), db: Session = Depends(get_d
 
     return verify_user_password(user_id, old_password, db)
 
-@router.post("/update_password/{user_id}")
+@router.post("/update_password")
 def api_update_password(data: dict = Body(...), db: Session = Depends(get_db)):
-    user_id = data.get("id")
+    user_id = data.get("id_user")
     new_password = data.get("new_password")
 
     return update_password(user_id, new_password, db)
 
-@router.post("/delete_account/{user_id}")
+@router.post("/delete_account")
 def api_delete_account(data: dict = Body(...), db: Session = Depends(get_db)):
-    user_id = data.get("id")
+    user_id = data.get("user_id")
     password = data.get("password")
 
     return delete_account(user_id, password, db)
