@@ -95,6 +95,8 @@ def analyze_crack_video(video_input: str):
 
     # Create temp output video
     temp_output = tempfile.NamedTemporaryFile(delete=False, suffix=".mp4")
+    temp_output_path = temp_output.name
+    temp_output.close()  # Close the file so OpenCV can write to it
 
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
     out = cv2.VideoWriter(temp_output.name, fourcc, fps, (width, height))
@@ -153,7 +155,7 @@ def analyze_crack_video(video_input: str):
     os.sync()
 
     # Upload
-    upload_result = upload_file(temp_output.name)
+    upload_result = upload_file(temp_output_path)
     file_url = upload_result.get("secure_url")
     filename = upload_result.get("original_filename")
 
@@ -161,7 +163,7 @@ def analyze_crack_video(video_input: str):
         raise RuntimeError("Video upload failed: Cloudinary did not return a secure URL")
 
     # Cleanup temp files
-    os.remove(temp_output.name)
+    os.remove(temp_output_path)
     if local_input_path != video_input:
         os.remove(local_input_path)
 
