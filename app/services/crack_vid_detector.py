@@ -152,8 +152,6 @@ def analyze_crack_video(video_input: str):
     # Ensure temp file is fully flushed
     os.sync()
 
-    temp_output
-
     # Upload
     upload_result = upload_file(temp_output.name)
     file_url = upload_result.get("secure_url")

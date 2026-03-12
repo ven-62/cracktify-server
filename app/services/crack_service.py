@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from app.models.user import User
 from app.models.crack import Crack
 
@@ -37,7 +37,7 @@ def fetch_cracks_service(user_id: int, db, limit):
 
 
 def detect_crack_service(file_info: dict, confidence_threshold: float):
-    # This function is now handled by the CrackClassifier's analyze_and_save method, which returns the confidence and saves the image with the appropriate filename. The service layer can then call that method and extract the confidence from the filename if needed for further processing or database storage.
+    """Detect cracks in an image or video based on the provided file information."""
     from app.services.crack_classifier import CrackClassifier
     from app.services.crack_vid_detector import analyze_crack_video
     from pathlib import Path
@@ -85,7 +85,7 @@ def add_crack_service(
         file_url=file_url,
         probability=probability,
         severity=severity,
-        detected_at=datetime.now(timezone.utc),
+        detected_at=datetime.now(timezone(timedelta(hours=8))),  # Assuming UTC+8 timezone
         filename=filename
     )
     db.add(new_crack)

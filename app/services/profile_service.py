@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from app.models.user import User
 from app.utils.password import hash_password, verify_password
 
@@ -24,7 +24,7 @@ def update_profile(profile_data: dict, db):
         if hasattr(user, key):
             setattr(user, key, value)
 
-    user.updated_at = datetime.now(timezone.utc)
+    user.updated_at = datetime.now(timezone(timedelta(hours=8)))  # Assuming UTC+8 timezone
 
     db.commit()
     db.refresh(user)
@@ -74,6 +74,7 @@ def update_password(user_id: int, new_password: str, db):
         hashed_password = hash_password(new_password)
 
         user.password_hash = hashed_password
+        user.updated_at = datetime.now(timezone(timedelta(hours=8)))  # Assuming UTC+8 timezone
 
         db.commit()
         db.refresh(user)
