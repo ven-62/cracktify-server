@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Body, Depends
 from sqlalchemy.orm import Session
 from app.database.db import get_db
-from app.services.crack_service import detect_crack_service, fetch_cracks_service, add_crack_service
+from app.services.crack_service import detect_crack_service, fetch_cracks_service, add_crack_service, delete_crack_service
 
 router = APIRouter()
 
@@ -9,16 +9,17 @@ router = APIRouter()
 def api_fetch_cracks(data: dict = Body(...), db: Session = Depends(get_db)):
     """Endpoint to fetch cracks for a specific user."""
     user_id = data.get("user_id")
+    limit = data.get("limit", 0)  # If limit is 0 or not provided, fetch all cracks
     
-    return fetch_cracks_service(user_id, db)
+    return fetch_cracks_service(user_id, db, limit=limit)
 
 @router.post("/detect")
 def api_detect_crack(data: dict = Body(...), db: Session = Depends(get_db)):
     """Endpoint to detect cracks in an image."""
-    image_url = data.get("image_url")
+    file_info = data.get("file_info")
     confidence_threshold = data.get("confidence_threshold", 0.4)  # Default threshold if not provided
     
-    return detect_crack_service(image_url, confidence_threshold, db)
+    return detect_crack_service(file_info, confidence_threshold, db)
 
 @router.post("/add")
 def api_add_crack(data: dict = Body(...), db: Session = Depends(get_db)):
@@ -31,4 +32,11 @@ def api_add_crack(data: dict = Body(...), db: Session = Depends(get_db)):
     severity = crack_data.get("severity")
     
     return add_crack_service(user_id, file_url, probability, severity, db)
+
+@router.post("/delete")
+def api_delete_crack(data: dict = Body(...), db: Session = Depends(get_db)):
+    """Endpoint to delete a crack."""
+    crack_id = data.get("crack_id")
+    
+    return delete_crack_service(crack_id, db)
 

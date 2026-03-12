@@ -1,19 +1,18 @@
 import os, json, base64
 from dotenv import load_dotenv
 
-import cloudinary
-
 # Load .env file
 load_dotenv()
 
 class Config:
-    # Database
-    DB_HOST = os.getenv("MYSQLHOST")
-    DB_USER = os.getenv("MYSQLUSER")
-    DB_PASSWORD = os.getenv("MYSQLPASSWORD")
-    DB_NAME = os.getenv("MYSQLDATABASE")
-    DB_PORT = int(os.getenv("MYSQLPORT", 3306))
+    # Database Configuration
+    DB_HOST = os.getenv("SQLHOST")
+    DB_USER = os.getenv("SQLUSER")
+    DB_PASSWORD = os.getenv("SQLPASSWORD")
+    DB_NAME = os.getenv("SQLDATABASE")
+    DB_PORT = int(os.getenv("SQLPORT", 5432))  # Default to 5432 for PostgreSQL
 
+    # Gmail API Credentials
     CREDS_INFO = json.loads(
         base64.b64decode(os.getenv("GMAIL_CREDENTIALS")).decode("utf-8")
     )

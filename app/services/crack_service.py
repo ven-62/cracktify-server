@@ -2,10 +2,18 @@ from datetime import datetime, timezone
 from app.models.user import User
 from app.models.crack import Crack
 
-def fetch_cracks_service(user_id: int, db):
+
+def fetch_cracks_service(user_id: int, db, limit):
     """Fetch cracks for a specific user."""
     try:
-        cracks = db.query(Crack).filter(Crack.user_id == user_id).order_by(Crack.detected_at.desc()).all()
+        query = db.query(Crack).filter(Crack.user_id == user_id)
+
+        if (
+            limit and limit > 0
+        ):  # If limit is provided and greater than 0, apply the limit to the query
+            query = query.order_by(Crack.detected_at.desc()).limit(limit)
+
+        cracks = query.all()
 
         total_cracks = len(cracks)
         # TODO: Add more crack types in the future and update this logic accordingly
@@ -22,26 +30,39 @@ def fetch_cracks_service(user_id: int, db):
                 "total_high_cracks": total_high_cracks,
                 "total_mild_cracks": total_mild_cracks,
                 "total_low_cracks": total_low_cracks,
-            }
+            },
         }
     except Exception as e:
-        return {
-            "success": False,
-            "message": f"Error fetching cracks: {str(e)}"
-        }
-def detect_crack_service(file_url: str, confidence_threshold: float, db):
+        return {"success": False, "message": f"Error fetching cracks: {str(e)}"}
+
+
+def detect_crack_service(file_info: str, confidence_threshold: float, db):
     # This function is now handled by the CrackClassifier's analyze_and_save method, which returns the confidence and saves the image with the appropriate filename. The service layer can then call that method and extract the confidence from the filename if needed for further processing or database storage.
     from app.services.crack_classifier import CrackClassifier
     from pathlib import Path
 
-    classifier_path = Path(__file__).parent.parent / "assets" / "model" / "crackAI.tflite"
-    
-    classifier = CrackClassifier(classifier_path)
+    file_url = file_info.get("file_url")
+    file_type = file_info.get("type")
 
-    result = classifier.analyze_and_save(file_url, confidence_threshold)
-    return result
+    if file_type == "image":
+        # If the file is an image, perform image classifier
+        classifier_path = (
+            Path(__file__).parent.parent / "assets" / "model" / "crackAI.tflite"
+        )
 
-def add_crack_service(user_id: int, file_url: str, probability: float, severity: str, db):
+        classifier = CrackClassifier(classifier_path)
+        result = classifier.analyze_and_save(file_url, confidence_threshold)
+
+        return result
+
+    elif file_type == "video":
+        # Else, if file is a video, perform video classifier
+        pass
+
+
+def add_crack_service(
+    user_id: int, file_url: str, probability: float, severity: str, db
+):
     """Add a crack for a specific user."""
 
     # Validate user
@@ -55,7 +76,7 @@ def add_crack_service(user_id: int, file_url: str, probability: float, severity:
         file_url=file_url,
         probability=probability,
         severity=severity,
-        detected_at=datetime.now(timezone.utc)
+        detected_at=datetime.now(timezone.utc),
     )
     db.add(new_crack)
     db.commit()
@@ -64,5 +85,20 @@ def add_crack_service(user_id: int, file_url: str, probability: float, severity:
     return {
         "success": True,
         "message": "Crack added successfully",
-        "crack_id": new_crack.id
+        "crack_id": new_crack.id,
     }
+
+
+def delete_crack_service(crack_id: int, db):
+    """Delete a crack by its ID."""
+    try:
+        crack = db.query(Crack).filter(Crack.id == crack_id).first()
+        if not crack:
+            return {"success": False, "message": "Crack not found"}
+
+        db.delete(crack)
+        db.commit()
+
+        return {"success": True, "message": "Crack deleted successfully"}
+    except Exception as e:
+        return {"success": False, "message": f"Error deleting crack: {str(e)}"}
