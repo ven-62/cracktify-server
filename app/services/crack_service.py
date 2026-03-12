@@ -36,7 +36,7 @@ def fetch_cracks_service(user_id: int, db, limit):
         return {"success": False, "message": f"Error fetching cracks: {str(e)}"}
 
 
-def detect_crack_service(file_info: str, confidence_threshold: float, db):
+def detect_crack_service(file_info: dict, confidence_threshold: float):
     # This function is now handled by the CrackClassifier's analyze_and_save method, which returns the confidence and saves the image with the appropriate filename. The service layer can then call that method and extract the confidence from the filename if needed for further processing or database storage.
     from app.services.crack_classifier import CrackClassifier
     from app.services.crack_vid_detector import analyze_crack_video
@@ -60,6 +60,9 @@ def detect_crack_service(file_info: str, confidence_threshold: float, db):
         # Else, if file is a video, perform video classifier
         result = analyze_crack_video(file_url)
         return result
+
+    else:
+        raise ValueError(f"Unsupported file type for crack detection: {file_type}")
 
 def add_crack_service(
     user_id: int, crack_data: dict, db

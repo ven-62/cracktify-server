@@ -14,12 +14,12 @@ def api_fetch_cracks(data: dict = Body(...), db: Session = Depends(get_db)):
     return fetch_cracks_service(user_id, db, limit=limit)
 
 @router.post("/detect")
-def api_detect_crack(data: dict = Body(...), db: Session = Depends(get_db)):
+def api_detect_crack(data: dict = Body(...)):
     """Endpoint to detect cracks in an image."""
     file_info = data.get("file_info")
     confidence_threshold = data.get("confidence_threshold", 0.4)  # Default threshold if not provided
     
-    return detect_crack_service(file_info, confidence_threshold, db)
+    return detect_crack_service(file_info, confidence_threshold)
 
 @router.post("/add")
 def api_add_crack(data: dict = Body(...), db: Session = Depends(get_db)):
