@@ -66,20 +66,23 @@ def verify_user_password(user_id: int, old_password: str, db):
         return {"success": False, "error": "Incorrect password"}
 
 def update_password(user_id: int, new_password: str, db):
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        return {"success": False, "error": "User not found"}
-    
-    hashed_password = hash_password(new_password)
+    try:
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            return {"success": False, "error": "User not found"}
+        
+        hashed_password = hash_password(new_password)
 
-    user.password_hash = hashed_password
+        user.password_hash = hashed_password
 
-    db.commit()
-    db.refresh(user)
+        db.commit()
+        db.refresh(user)
 
-    return {
-        "success": True, "message": "Password updated"
-    }
+        return {
+            "success": True, "message": "Password updated"
+        }
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
 
 def delete_account(user_id: int, password: str, db):
