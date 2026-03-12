@@ -149,6 +149,7 @@ class CrackClassifier:
             # Upload to Cloudinary
             result = upload_file(temp_file.name)
             file_url = result.get("secure_url")
+            filename = result.get("original_filename")
 
             # Determine severity
             if prob >= 0.8:
@@ -160,6 +161,7 @@ class CrackClassifier:
 
             return {
                 "file_url": file_url,
+                "filename": filename,
                 "severity": severity,
                 "probability": prob
             }

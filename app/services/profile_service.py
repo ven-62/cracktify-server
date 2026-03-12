@@ -2,6 +2,10 @@ from datetime import datetime, timezone
 from app.models.user import User
 from app.utils.password import hash_password, verify_password
 
+def validate_email_uniqueness(email_address: str, db):
+    """Check if the email address is already in use by another user."""
+    existing_user = db.query(User).filter(User.email_address == email_address).first()
+    return existing_user is None
 
 def update_profile(profile_data: dict, db):
     """Update user profile with provided data"""
@@ -10,6 +14,11 @@ def update_profile(profile_data: dict, db):
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         return {"success": False, "error": "User not found"}
+    
+    if "email_address" in profile_data:
+        existing_user = db.query(User).filter(User.email_address == profile_data["email_address"], User.id != user_id).first()
+        if existing_user:
+            return {"success": False, "error": "Email address already in use"}
 
     for key, value in profile_data.items():
         if hasattr(user, key):

@@ -18,4 +18,3 @@ def upload_file(file_path):
     return cloudinary.uploader.upload(
         file_path, use_filename=True, resource_type="auto"
     )
-
