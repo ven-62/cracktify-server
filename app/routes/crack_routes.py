@@ -27,11 +27,7 @@ def api_add_crack(data: dict = Body(...), db: Session = Depends(get_db)):
     user_id = data.get("user_id")
     crack_data = data.get("crack_data")
     
-    file_url = crack_data.get("file_url")
-    probability = crack_data.get("probability")
-    severity = crack_data.get("severity")
-    
-    return add_crack_service(user_id, file_url, probability, severity, db)
+    return add_crack_service(user_id, crack_data, db)
 
 @router.post("/delete")
 def api_delete_crack(data: dict = Body(...), db: Session = Depends(get_db)):

@@ -28,9 +28,7 @@ def detect_cracks(frame):
     kernel = np.ones((3, 3), np.uint8)
     dilated = cv2.dilate(edges, kernel, iterations=DILATE_ITERATIONS)
 
-    contours, _ = cv2.findContours(
-        dilated, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
-    )
+    contours, _ = cv2.findContours(dilated, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     return contours
 
 
@@ -47,40 +45,60 @@ def classify_severity_and_probability(area):
     else:
         return "High", (0, 0, 255), probability
 
+
 def resolve_video_path(video_input: str):
-    """Resolves the video path. If it's a URL, it downloads the video and returns the local path. If it's already a local path, it returns it directly."""
+    """
+    If URL → download to temp file
+    If local path → return as-is
+    """
     parsed_url = urlparse(video_input)
-    if parsed_url.scheme not in ('http', 'https'):
-        raise ValueError(f"Invalid URL format: {video_input}")
 
-    try:
-        response = requests.get(video_input, stream=True)
-        response.raise_for_status()
+    # Local file
+    if parsed_url.scheme == "":
+        if not os.path.exists(video_input):
+            raise FileNotFoundError(f"File not found: {video_input}")
+        return video_input
 
-        suffix = os.path.splitext(parsed_url.path)[1]
-        if suffix.lower() not in ['.mp4', '.avi', '.mov']:
-            suffix = '.mp4'
+    # Remote URL
+    if parsed_url.scheme in ("http", "https"):
+        try:
+            response = requests.get(video_input, stream=True)
+            response.raise_for_status()
 
-        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
-            temp_file.write(response.content)
-            return temp_file.name
-        
-    except Exception as e:
-        raise RuntimeError(f"Failed to download video: {video_input}") from e
+            suffix = os.path.splitext(parsed_url.path)[1] or ".mp4"
+
+            with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
+                for chunk in response.iter_content(chunk_size=8192):
+                    if chunk:
+                        temp_file.write(chunk)
+
+                return temp_file.name
+
+        except Exception as e:
+            raise RuntimeError("Failed to download video") from e
+
+    raise ValueError(f"Unsupported video input: {video_input}")
+
 
 # MAIN FUNCTION
-def analyze_crack_video(video_path: str):
-    video_path = resolve_video_path(video_path)
+def analyze_crack_video(video_input: str):
+    local_input_path = resolve_video_path(video_input)
 
-    cap = cv2.VideoCapture(video_path)
+    cap = cv2.VideoCapture(local_input_path)
+    if not cap.isOpened():
+        raise RuntimeError("Failed to open video")
 
     fps = int(cap.get(cv2.CAP_PROP_FPS))
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
+    # Create temp output video
+    temp_output = tempfile.NamedTemporaryFile(delete=False, suffix=".mp4")
+    temp_output.close()
+
+    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+    out = cv2.VideoWriter(temp_output.name, fourcc, fps, (width, height))
 
     overall_max_probability = 0
     overall_max_severity = "Low"
@@ -106,7 +124,6 @@ def analyze_crack_video(video_path: str):
             label, color, probability = result
             crack_found = True
 
-            # Track overall result
             if (
                 severity_rank[label] > severity_rank[overall_max_severity]
                 or probability > overall_max_probability
@@ -119,22 +136,13 @@ def analyze_crack_video(video_path: str):
             cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
             cv2.putText(
                 frame,
-                f"{label} (area: {int(area)})",
+                f"{label} ({int(area)})",
                 (x, y - 10),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.6,
                 color,
-                2
+                2,
             )
-
-        status = "CRACK DETECTED" if crack_found else "NO CRACK"
-        status_color = (0, 0, 255) if crack_found else (0, 255, 0)
-        cv2.putText(frame, status, (20, 40),
-                    cv2.FONT_HERSHEY_SIMPLEX, 1.2, status_color, 3)
-
-        cv2.putText(frame, f"Frame: {frame_count}/{total_frames}",
-                    (20, height - 20),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
 
         out.write(frame)
         frame_count += 1
@@ -142,18 +150,17 @@ def analyze_crack_video(video_path: str):
     cap.release()
     out.release()
 
-    # Save processed video temporarily
-    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mp4")
-    cv2.VideoWriter(temp_file.name, fourcc, fps, (width, height))
+    # Upload processed video
+    upload_result = upload_file(temp_output.name)
 
-    # Upload to Cloudinary
-    result = upload_file(temp_file.name)
-    output_path = result.get("secure_url")
-    filename = result.get("original_filename")
+    # Cleanup temp files
+    os.remove(temp_output.name)
+    if local_input_path != video_input:
+        os.remove(local_input_path)
 
     return {
-        "file_url": output_path,
-        "filename": filename,
+        "file_url": upload_result.get("secure_url"),
+        "filename": upload_result.get("original_filename"),
         "severity": overall_max_severity,
-        "probability": overall_max_probability
+        "probability": round(overall_max_probability, 2),
     }

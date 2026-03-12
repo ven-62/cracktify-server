@@ -62,7 +62,7 @@ def detect_crack_service(file_info: str, confidence_threshold: float, db):
         return result
 
 def add_crack_service(
-    user_id: int, file_url: str, probability: float, severity: str, db
+    user_id: int, crack_data: dict, db
 ):
     """Add a crack for a specific user."""
 
@@ -70,6 +70,11 @@ def add_crack_service(
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         return {"success": False, "message": "User not found"}
+    
+    file_url = crack_data.get("file_url")
+    probability = crack_data.get("probability")
+    severity = crack_data.get("severity")
+    filename = crack_data.get("filename")
 
     # Create crack record
     new_crack = Crack(
@@ -78,6 +83,7 @@ def add_crack_service(
         probability=probability,
         severity=severity,
         detected_at=datetime.now(timezone.utc),
+        filename=filename
     )
     db.add(new_crack)
     db.commit()
