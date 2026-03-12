@@ -13,8 +13,8 @@ cloudinary.config(
 )
 
 
-def upload_file(file_path):
+def upload_file(file_path, resource_type="auto"):
     """Uploads a file to Cloudinary."""
     return cloudinary.uploader.upload(
-        file_path, use_filename=True, resource_type="auto"
+        file_path, use_filename=True, resource_type=resource_type
     )

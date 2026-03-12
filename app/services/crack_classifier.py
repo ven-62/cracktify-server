@@ -147,9 +147,9 @@ class CrackClassifier:
             cv2.imwrite(temp_file.name, output)
 
             # Upload to Cloudinary
-            result = upload_file(temp_file.name)
-            file_url = result.get("secure_url")
-            filename = result.get("original_filename")
+            result = upload_file(temp_file.name, resource_type="image")
+            file_url = result["secure_url"]
+            filename = result["original_filename"]
 
             # Determine severity
             if prob >= 0.8:

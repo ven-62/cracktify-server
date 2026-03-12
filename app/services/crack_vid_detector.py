@@ -24,10 +24,8 @@ def detect_cracks(frame):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     blurred = cv2.GaussianBlur(gray, BLUR_KERNEL, 0)
     edges = cv2.Canny(blurred, CANNY_THRESHOLD1, CANNY_THRESHOLD2)
-
     kernel = np.ones((3, 3), np.uint8)
     dilated = cv2.dilate(edges, kernel, iterations=DILATE_ITERATIONS)
-
     contours, _ = cv2.findContours(dilated, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     return contours
 
@@ -35,9 +33,7 @@ def detect_cracks(frame):
 def classify_severity_and_probability(area):
     if area < NOISE_FILTER:
         return None
-
     probability = min(area / MAX_CRACK_AREA, 1.0) * 100
-
     if area < LOW_THRESHOLD:
         return "Low", (0, 255, 0), probability
     elif area < MILD_THRESHOLD:
@@ -62,17 +58,18 @@ def resolve_video_path(video_input: str):
     # Remote URL
     if parsed_url.scheme in ("http", "https"):
         try:
-            response = requests.get(video_input, stream=True)
+            response = requests.get(video_input, stream=True, timeout=30)
             response.raise_for_status()
 
             suffix = os.path.splitext(parsed_url.path)[1] or ".mp4"
 
-            with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
+            fd, temp_path = tempfile.mkstemp(suffix=suffix)
+            os.close(fd)
+            with open(temp_path, "wb") as f:
                 for chunk in response.iter_content(chunk_size=8192):
                     if chunk:
-                        temp_file.write(chunk)
-
-                return temp_file.name
+                        f.write(chunk)
+            return temp_path
 
         except Exception as e:
             raise RuntimeError("Failed to download video") from e
@@ -80,12 +77,11 @@ def resolve_video_path(video_input: str):
     raise ValueError(f"Unsupported video input: {video_input}")
 
 
-# MAIN FUNCTION
 def analyze_crack_video(video_input: str):
     local_input_path = resolve_video_path(video_input)
+    temp_output_path = None
 
     try:
-
         cap = cv2.VideoCapture(local_input_path)
         if not cap.isOpened():
             raise RuntimeError("Failed to open video")
@@ -93,23 +89,16 @@ def analyze_crack_video(video_input: str):
         fps = int(cap.get(cv2.CAP_PROP_FPS))
         width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
         # Create temp output video
-        temp_output = tempfile.NamedTemporaryFile(delete=False, suffix=".mp4")
-        temp_output_path = temp_output.name
-
-        fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-
         fd, temp_output_path = tempfile.mkstemp(suffix=".mp4")
         os.close(fd)  # close OS fd; VideoWriter will write
+        fourcc = cv2.VideoWriter_fourcc(*"mp4v")
         out = cv2.VideoWriter(temp_output_path, fourcc, fps, (width, height))
 
         overall_max_probability = 0
         overall_max_severity = "Low"
         severity_rank = {"Low": 1, "Mild": 2, "High": 3}
-
-        frame_count = 0
 
         while cap.isOpened():
             ret, frame = cap.read()
@@ -117,54 +106,42 @@ def analyze_crack_video(video_input: str):
                 break
 
             contours = detect_cracks(frame)
-            crack_found = False
 
             for contour in contours:
                 area = cv2.contourArea(contour)
                 result = classify_severity_and_probability(area)
-
                 if result is None:
                     continue
 
                 label, color, probability = result
-                crack_found = True
 
-                if (
-                    severity_rank[label] > severity_rank[overall_max_severity]
-                    or probability > overall_max_probability
-                ):
+                if (severity_rank[label] > severity_rank[overall_max_severity]
+                        or probability > overall_max_probability):
                     overall_max_severity = label
                     overall_max_probability = probability
 
                 cv2.drawContours(frame, [contour], -1, color, 2)
                 x, y, w, h = cv2.boundingRect(contour)
                 cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
-                cv2.putText(
-                    frame,
-                    f"{label} ({int(area)})",
-                    (x, y - 10),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.6,
-                    color,
-                    2,
-                )
+                cv2.putText(frame, f"{label} ({int(area)})", (x, y - 10),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
 
             out.write(frame)
-            frame_count += 1
 
+        # Release video objects
         out.release()
         cap.release()
 
-        # Ensure temp file is fully flushed
-        temp_output.flush()
+        # Ensure OS flush
+        os.sync()
 
-        # Upload
-        upload_result = upload_file(temp_output_path)
-        file_url = upload_result.get("secure_url")
-        filename = upload_result.get("original_filename")
+        # Upload video to Cloudinary
+        upload_result = upload_file(temp_output_path, resource_type="video")
+        file_url = upload_result["secure_url"]
+        filename = upload_result["original_filename"]
 
         if not file_url:
-            raise RuntimeError("Video upload failed: Cloudinary did not return a secure URL")
+            raise RuntimeError("Cloudinary upload failed or did not return a secure URL")
 
         return {
             "file_url": file_url,
@@ -172,10 +149,10 @@ def analyze_crack_video(video_input: str):
             "severity": overall_max_severity,
             "probability": round(overall_max_probability, 2),
         }
-    
-    finally:        # Ensure temp files are cleaned up in case of errors
-        if os.path.exists(temp_output_path):
+
+    finally:
+        # Cleanup temp files
+        if temp_output_path and os.path.exists(temp_output_path):
             os.remove(temp_output_path)
-        if 'local_input_path' in locals() and local_input_path != video_input and os.path.exists(local_input_path):
+        if local_input_path != video_input and os.path.exists(local_input_path):
             os.remove(local_input_path)
-        
