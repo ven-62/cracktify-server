@@ -13,7 +13,7 @@ def fetch_cracks_service(user_id: int, db, limit):
         ):  # If limit is provided and greater than 0, apply the limit to the query
             query = query.order_by(Crack.detected_at.desc()).limit(limit)
 
-        cracks = query.all().order_by(Crack.detected_at.desc())  # Order by detected_at descending to show most recent cracks first
+        cracks = query.order_by(Crack.detected_at.desc()).all()
 
         total_cracks = len(cracks)
         # TODO: Add more crack types in the future and update this logic accordingly
