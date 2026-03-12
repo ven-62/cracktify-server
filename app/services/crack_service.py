@@ -42,7 +42,7 @@ def detect_crack_service(file_info: str, confidence_threshold: float, db):
     from app.services.crack_vid_detector import analyze_crack_video
     from pathlib import Path
 
-    file_url = file_info.get("file_url")
+    file_url = file_info.get("url")
     file_type = file_info.get("type")
 
     if file_type == "image":
