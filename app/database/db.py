@@ -14,7 +14,7 @@ def create_db_engine():
     try:
         # PostgreSQL connection URL
         postgres_url = (
-            f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+            f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}?sslmode=require"
         )
         engine = create_engine(
             postgres_url,
