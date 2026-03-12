@@ -84,92 +84,98 @@ def resolve_video_path(video_input: str):
 def analyze_crack_video(video_input: str):
     local_input_path = resolve_video_path(video_input)
 
-    cap = cv2.VideoCapture(local_input_path)
-    if not cap.isOpened():
-        raise RuntimeError("Failed to open video")
+    try:
 
-    fps = int(cap.get(cv2.CAP_PROP_FPS))
-    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        cap = cv2.VideoCapture(local_input_path)
+        if not cap.isOpened():
+            raise RuntimeError("Failed to open video")
 
-    # Create temp output video
-    temp_output = tempfile.NamedTemporaryFile(delete=False, suffix=".mp4")
-    temp_output_path = temp_output.name
-    temp_output.close()  # Close the file so OpenCV can write to it
+        fps = int(cap.get(cv2.CAP_PROP_FPS))
+        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
-    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-    out = cv2.VideoWriter(temp_output.name, fourcc, fps, (width, height))
+        # Create temp output video
+        temp_output = tempfile.NamedTemporaryFile(delete=False, suffix=".mp4")
+        temp_output_path = temp_output.name
 
-    overall_max_probability = 0
-    overall_max_severity = "Low"
-    severity_rank = {"Low": 1, "Mild": 2, "High": 3}
+        fourcc = cv2.VideoWriter_fourcc(*"mp4v")
 
-    frame_count = 0
+        fd, temp_output_path = tempfile.mkstemp(suffix=".mp4")
+        os.close(fd)  # close OS fd; VideoWriter will write
+        out = cv2.VideoWriter(temp_output_path, fourcc, fps, (width, height))
 
-    while cap.isOpened():
-        ret, frame = cap.read()
-        if not ret:
-            break
+        overall_max_probability = 0
+        overall_max_severity = "Low"
+        severity_rank = {"Low": 1, "Mild": 2, "High": 3}
 
-        contours = detect_cracks(frame)
-        crack_found = False
+        frame_count = 0
 
-        for contour in contours:
-            area = cv2.contourArea(contour)
-            result = classify_severity_and_probability(area)
+        while cap.isOpened():
+            ret, frame = cap.read()
+            if not ret:
+                break
 
-            if result is None:
-                continue
+            contours = detect_cracks(frame)
+            crack_found = False
 
-            label, color, probability = result
-            crack_found = True
+            for contour in contours:
+                area = cv2.contourArea(contour)
+                result = classify_severity_and_probability(area)
 
-            if (
-                severity_rank[label] > severity_rank[overall_max_severity]
-                or probability > overall_max_probability
-            ):
-                overall_max_severity = label
-                overall_max_probability = probability
+                if result is None:
+                    continue
 
-            cv2.drawContours(frame, [contour], -1, color, 2)
-            x, y, w, h = cv2.boundingRect(contour)
-            cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
-            cv2.putText(
-                frame,
-                f"{label} ({int(area)})",
-                (x, y - 10),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.6,
-                color,
-                2,
-            )
+                label, color, probability = result
+                crack_found = True
 
-        out.write(frame)
-        frame_count += 1
+                if (
+                    severity_rank[label] > severity_rank[overall_max_severity]
+                    or probability > overall_max_probability
+                ):
+                    overall_max_severity = label
+                    overall_max_probability = probability
 
-    out.release()
-    cap.release()
+                cv2.drawContours(frame, [contour], -1, color, 2)
+                x, y, w, h = cv2.boundingRect(contour)
+                cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
+                cv2.putText(
+                    frame,
+                    f"{label} ({int(area)})",
+                    (x, y - 10),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.6,
+                    color,
+                    2,
+                )
 
-    # Ensure temp file is fully flushed
-    os.sync()
+            out.write(frame)
+            frame_count += 1
 
-    # Upload
-    upload_result = upload_file(temp_output_path)
-    file_url = upload_result.get("secure_url")
-    filename = upload_result.get("original_filename")
+        out.release()
+        cap.release()
 
-    if not file_url:
-        raise RuntimeError("Video upload failed: Cloudinary did not return a secure URL")
+        # Ensure temp file is fully flushed
+        temp_output.flush()
 
-    # Cleanup temp files
-    os.remove(temp_output_path)
-    if local_input_path != video_input:
-        os.remove(local_input_path)
+        # Upload
+        upload_result = upload_file(temp_output_path)
+        file_url = upload_result.get("secure_url")
+        filename = upload_result.get("original_filename")
 
-    return {
-        "file_url": file_url,
-        "filename": filename,
-        "severity": overall_max_severity,
-        "probability": round(overall_max_probability, 2),
-    }
+        if not file_url:
+            raise RuntimeError("Video upload failed: Cloudinary did not return a secure URL")
+
+        return {
+            "file_url": file_url,
+            "filename": filename,
+            "severity": overall_max_severity,
+            "probability": round(overall_max_probability, 2),
+        }
+    
+    finally:        # Ensure temp files are cleaned up in case of errors
+        if os.path.exists(temp_output_path):
+            os.remove(temp_output_path)
+        if 'local_input_path' in locals() and local_input_path != video_input and os.path.exists(local_input_path):
+            os.remove(local_input_path)
+        
