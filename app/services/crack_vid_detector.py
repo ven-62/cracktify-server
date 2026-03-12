@@ -148,7 +148,6 @@ def analyze_crack_video(video_input: str):
 
     out.release()
     cap.release()
-    cv2.destroyAllWindows()  # optional
 
     # Ensure temp file is fully flushed
     os.sync()
