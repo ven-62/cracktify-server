@@ -33,7 +33,7 @@ def detect_cracks(frame):
 def classify_severity_and_probability(area):
     if area < NOISE_FILTER:
         return None
-    probability = min(area / MAX_CRACK_AREA, 1.0) * 100
+    probability = min(area / MAX_CRACK_AREA, 1.0)
     if area < LOW_THRESHOLD:
         return "Low", (0, 255, 0), probability
     elif area < MILD_THRESHOLD:
