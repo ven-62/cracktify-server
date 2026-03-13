@@ -4,7 +4,8 @@ from app.utils.password import hash_password, verify_password
 from app.utils.token_generator import generate_jwt
 from config import Config
 
-DEFAULT_AVATAR="https://www.gravatar.com/avatar/?d=mp&s=200"
+DEFAULT_AVATAR = "https://www.gravatar.com/avatar/?d=mp&s=200"
+
 
 def check_email_unique_service(email_address: str, db):
     """Check if the email is already registered."""
@@ -12,11 +13,17 @@ def check_email_unique_service(email_address: str, db):
     user = db.query(User).filter(User.email_address == email_address).first()
 
     if user:
-        return {"success": False, "message": "Email is already registered"} # If email found, return not unique
-    
+        return {
+            "success": False,
+            "message": "Email is already registered",
+        }  # If email found, return not unique
+
     return {"success": True, "message": "Email is unique"}
 
-def register_user_service(first_name: str, last_name: str, email_address: str, password: str, db):
+
+def register_user_service(
+    first_name: str, last_name: str, email_address: str, password: str, db
+):
     """Register a new user."""
     # Check if user already exists
     existing_user = db.query(User).filter(User.email_address == email_address).first()
@@ -34,7 +41,7 @@ def register_user_service(first_name: str, last_name: str, email_address: str, p
         password_hash=hashed_password,
         avatar_url=DEFAULT_AVATAR,
         created_at=datetime.now(timezone.utc),  # Assuming UTC timezone
-        updated_at=datetime.now(timezone.utc)
+        updated_at=datetime.now(timezone.utc),
     )
 
     db.add(new_user)
@@ -45,7 +52,7 @@ def register_user_service(first_name: str, last_name: str, email_address: str, p
     token = generate_jwt(new_user.id, new_user.email_address)
 
     return {
-        "success": True, 
+        "success": True,
         "message": "User registered successfully",
         "token": token,
         "user": {
@@ -53,9 +60,10 @@ def register_user_service(first_name: str, last_name: str, email_address: str, p
             "first_name": new_user.first_name,
             "last_name": new_user.last_name,
             "email_address": new_user.email_address,
-            "avatar_url": new_user.avatar_url
-        }
+            "avatar_url": new_user.avatar_url,
+        },
     }
+
 
 def login_user_service(email_address: str, password: str, db):
     """Authenticate a user by email and password."""
@@ -67,21 +75,22 @@ def login_user_service(email_address: str, password: str, db):
     # Verify password
     if not verify_password(password, user.password_hash):
         return {"success": False, "message": "Invalid email or password"}
-    
+
     token = generate_jwt(user.id, user.email_address)
 
     return {
-        "success": True, 
-        "message": "Login successful", 
+        "success": True,
+        "message": "Login successful",
         "token": token,
         "user": {
             "id": user.id,
             "first_name": user.first_name,
             "last_name": user.last_name,
             "email_address": user.email_address,
-            "avatar_url": user.avatar_url
-        }
+            "avatar_url": user.avatar_url,
+        },
     }
+
 
 def forgot_password_service(email_address: str, new_password: str, db):
     """Reset user's password."""

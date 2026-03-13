@@ -2,8 +2,10 @@ import random
 import secrets
 from datetime import datetime, timezone
 
+
 def generate_otp():
     return "".join(str(secrets.randbelow(10)) for _ in range(6))
+
 
 def verify_otp(last_otp, entered_otp, datenow):
     if not last_otp:
@@ -18,4 +20,3 @@ def verify_otp(last_otp, entered_otp, datenow):
         return False
 
     return last_otp.otp == entered_otp
-

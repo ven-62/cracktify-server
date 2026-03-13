@@ -1,8 +1,9 @@
 from datetime import datetime, timezone
 
+
 def human_time(dt: datetime) -> str:
     """Convert datetime to friendly 'x mins ago', 'Yesterday', etc."""
-    
+
     # Fix: ensure dt is timezone-aware
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=timezone.utc)

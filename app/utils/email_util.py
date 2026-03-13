@@ -6,12 +6,11 @@ from config import Config
 
 SCOPES = ["https://www.googleapis.com/auth/gmail.send"]
 
+
 def get_gmail_service():
-    creds = Credentials.from_authorized_user_info(
-        Config.TOKEN_INFO,
-        SCOPES
-    )
+    creds = Credentials.from_authorized_user_info(Config.TOKEN_INFO, SCOPES)
     return build("gmail", "v1", credentials=creds)
+
 
 def send_email(receiver_email: str, subject: str, html_content: str):
     service = get_gmail_service()
@@ -22,9 +21,6 @@ def send_email(receiver_email: str, subject: str, html_content: str):
 
     raw = base64.urlsafe_b64encode(message.as_bytes()).decode()
 
-    service.users().messages().send(
-        userId="me",
-        body={"raw": raw}
-    ).execute()
+    service.users().messages().send(userId="me", body={"raw": raw}).execute()
 
     return {"success": True, "message": "Email sent successfully"}

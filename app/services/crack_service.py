@@ -64,16 +64,15 @@ def detect_crack_service(file_info: dict, confidence_threshold: float):
     else:
         raise ValueError(f"Unsupported file type for crack detection: {file_type}")
 
-def add_crack_service(
-    user_id: int, crack_data: dict, db
-):
+
+def add_crack_service(user_id: int, crack_data: dict, db):
     """Add a crack for a specific user."""
 
     # Validate user
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         return {"success": False, "message": "User not found"}
-    
+
     file_url = crack_data.get("file_url")
     probability = crack_data.get("probability")
     severity = crack_data.get("severity")
@@ -86,7 +85,7 @@ def add_crack_service(
         probability=probability,
         severity=severity,
         detected_at=datetime.now(timezone.utc),  # Assuming UTC timezone
-        filename=filename
+        filename=filename,
     )
     db.add(new_crack)
     db.commit()

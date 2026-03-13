@@ -115,16 +115,25 @@ def analyze_crack_video(video_input: str):
 
                 label, color, probability = result
 
-                if (severity_rank[label] > severity_rank[overall_max_severity]
-                        or probability > overall_max_probability):
+                if (
+                    severity_rank[label] > severity_rank[overall_max_severity]
+                    or probability > overall_max_probability
+                ):
                     overall_max_severity = label
                     overall_max_probability = probability
 
                 cv2.drawContours(frame, [contour], -1, color, 2)
                 x, y, w, h = cv2.boundingRect(contour)
                 cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
-                cv2.putText(frame, f"{label} ({int(area)})", (x, y - 10),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
+                cv2.putText(
+                    frame,
+                    f"{label} ({int(area)})",
+                    (x, y - 10),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.6,
+                    color,
+                    2,
+                )
 
             out.write(frame)
 
@@ -141,7 +150,9 @@ def analyze_crack_video(video_input: str):
         filename = upload_result["original_filename"]
 
         if not file_url:
-            raise RuntimeError("Cloudinary upload failed or did not return a secure URL")
+            raise RuntimeError(
+                "Cloudinary upload failed or did not return a secure URL"
+            )
 
         return {
             "file_url": file_url,
