@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 # Load .env file
 load_dotenv()
 
+
 class Config:
     # Database Configuration
     DB_HOST = os.getenv("SQLHOST")
@@ -17,9 +18,7 @@ class Config:
         base64.b64decode(os.getenv("GMAIL_CREDENTIALS")).decode("utf-8")
     )
 
-    TOKEN_INFO = json.loads(
-        base64.b64decode(os.getenv("GMAIL_TOKEN")).decode("utf-8")
-    )
+    TOKEN_INFO = json.loads(base64.b64decode(os.getenv("GMAIL_TOKEN")).decode("utf-8"))
 
     # JWT Settings
     JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")

@@ -20,11 +20,10 @@ class CrackClassifier:
         self.interpreter = tf.lite.Interpreter(model_path=model_path, num_threads=1)
         self.interpreter.allocate_tensors()
 
-        self.input_details  = self.interpreter.get_input_details()
+        self.input_details = self.interpreter.get_input_details()
         self.output_details = self.interpreter.get_output_details()
 
         self._lock = threading.Lock()
-
 
     def _resolve_image_path(self, image_input: str) -> str:
         """
@@ -51,7 +50,6 @@ class CrackClassifier:
 
         except Exception as e:
             raise RuntimeError(f"Failed to download image: {image_input}") from e
-        
 
     # ---------- PREPROCESS FUNCTIONS ----------
     def _mobilenet_standard_scaling(self, image_array_rgb):
@@ -73,21 +71,21 @@ class CrackClassifier:
         img_array = np.array(img)
         return self._mobilenet_standard_scaling(img_array)
 
-
     # ---------- PREDICT FUNCTION ----------
     def predict(self, image_path: str) -> float:
         img = self._preprocess_image(image_path)
         img = np.expand_dims(img, axis=0)
 
         with self._lock:
-            self.interpreter.set_tensor(self.input_details[0]['index'], img)
+            self.interpreter.set_tensor(self.input_details[0]["index"], img)
             self.interpreter.invoke()
-            output = self.interpreter.get_tensor(self.output_details[0]['index'])
+            output = self.interpreter.get_tensor(self.output_details[0]["index"])
 
         return float(output[0][0])
 
-        
-    def analyze_and_save(self, image_path: str, confidence_threshold: float = 0.4) -> dict:
+    def analyze_and_save(
+        self, image_path: str, confidence_threshold: float = 0.4
+    ) -> dict:
         """
         Analyzes image, draws crack contours if confidence > threshold,
         saves processed image, uploads to Cloudinary, and returns info.
@@ -108,12 +106,18 @@ class CrackClassifier:
             if prob >= confidence_threshold:
                 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
                 binary = cv2.adaptiveThreshold(
-                    gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-                    cv2.THRESH_BINARY_INV, 99, 15
+                    gray,
+                    255,
+                    cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+                    cv2.THRESH_BINARY_INV,
+                    99,
+                    15,
                 )
-                kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3,3))
+                kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
                 binary = cv2.morphologyEx(binary, cv2.MORPH_CLOSE, kernel, iterations=2)
-                contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                contours, _ = cv2.findContours(
+                    binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+                )
 
                 valid_contours = [cnt for cnt in contours if cv2.contourArea(cnt) > 200]
 
@@ -129,7 +133,7 @@ class CrackClassifier:
                     cv2.FONT_HERSHEY_SIMPLEX,
                     1.0,
                     (0, 0, 255) if prob > 0.8 else (0, 165, 255),
-                    2
+                    2,
                 )
             else:
                 cv2.putText(
@@ -139,7 +143,7 @@ class CrackClassifier:
                     cv2.FONT_HERSHEY_SIMPLEX,
                     1.0,
                     (0, 255, 0),
-                    2
+                    2,
                 )
 
             # Save processed image temporarily
@@ -147,9 +151,9 @@ class CrackClassifier:
             cv2.imwrite(temp_file.name, output)
 
             # Upload to Cloudinary
-            result = upload_file(temp_file.name)
-            file_url = result.get("secure_url")
-            filename = result.get("original_filename")
+            result = upload_file(temp_file.name, resource_type="image")
+            file_url = result["secure_url"]
+            filename = result["original_filename"]
 
             # Determine severity
             if prob >= 0.8:
@@ -159,16 +163,21 @@ class CrackClassifier:
             else:
                 severity = "Low"
 
+            if not file_url:
+                raise RuntimeError(
+                    "Cloudinary upload failed or did not return a secure URL"
+                )
+
             return {
                 "file_url": file_url,
                 "filename": filename,
                 "severity": severity,
-                "probability": prob
+                "probability": prob,
             }
 
         finally:
             # Cleanup temp files
             if resolved_path != image_path and os.path.exists(resolved_path):
                 os.remove(resolved_path)
-            if 'temp_file' in locals() and os.path.exists(temp_file.name):
+            if "temp_file" in locals() and os.path.exists(temp_file.name):
                 os.remove(temp_file.name)

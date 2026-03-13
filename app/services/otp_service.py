@@ -8,8 +8,9 @@ from app.templates.otp_template import otp_email_template, forgot_password_otp_t
 
 OTP_EXPIRATION_MINUTES = 5
 
+
 def send_email_otp(email_address: str, name: str, resend: bool, db):
-    now = datetime.now(timezone.utc)
+    now = datetime.now(timezone.utc)  # Assuming UTC timezone
 
     if resend:
         db.query(OTP).filter(OTP.email_address == email_address).delete()
@@ -17,8 +18,7 @@ def send_email_otp(email_address: str, name: str, resend: bool, db):
 
     # Remove existing valid OTP
     db.query(OTP).filter(
-        OTP.email_address == email_address,
-        OTP.expires_at > now
+        OTP.email_address == email_address, OTP.expires_at > now
     ).delete()
     db.commit()
 
@@ -29,7 +29,7 @@ def send_email_otp(email_address: str, name: str, resend: bool, db):
         email_address=email_address,
         otp=otp_code,
         created_at=now,
-        expires_at=now + timedelta(minutes=OTP_EXPIRATION_MINUTES)
+        expires_at=now + timedelta(minutes=OTP_EXPIRATION_MINUTES),
     )
     db.add(new_otp)
     db.commit()
@@ -43,16 +43,22 @@ def send_email_otp(email_address: str, name: str, resend: bool, db):
     if not response.get("success"):
         return {
             "success": False,
-            "message": response.get("message", "Failed to send OTP email")
+            "message": response.get("message", "Failed to send OTP email"),
         }
 
     return {"success": True, "message": "OTP has been sent to your email"}
 
+
 def verify_entered_otp(email_address: str, entered_otp: str, db):
-    now = datetime.now(timezone.utc)
+    now = datetime.now(timezone.utc)  # Assuming UTC timezone
 
     # Get the latest OTP for this email
-    last_otp = db.query(OTP).filter(OTP.email_address == email_address).order_by(OTP.created_at.desc()).first()
+    last_otp = (
+        db.query(OTP)
+        .filter(OTP.email_address == email_address)
+        .order_by(OTP.created_at.desc())
+        .first()
+    )
 
     if not verify_otp(last_otp, entered_otp, now):
         return {"success": False, "message": "Invalid OTP"}
@@ -62,6 +68,7 @@ def verify_entered_otp(email_address: str, entered_otp: str, db):
     db.commit()
 
     return {"success": True, "message": "Email has been verified"}
+
 
 def send_forgot_password_otp(email_address: str, db):
     user = db.query(User).filter(User.email_address == email_address).first()
@@ -73,8 +80,9 @@ def send_forgot_password_otp(email_address: str, db):
     new_otp = OTP(
         email_address=email_address,
         otp=otp,
-        created_at=datetime.now(timezone.utc),
-        expires_at=datetime.now(timezone.utc) + timedelta(minutes=OTP_EXPIRATION_MINUTES)
+        created_at=datetime.now(timezone.utc),  # Assuming UTC timezone
+        expires_at=datetime.now(timezone.utc)
+        + timedelta(minutes=OTP_EXPIRATION_MINUTES),  # Assuming UTC timezone
     )
     db.add(new_otp)
     db.commit()
@@ -85,9 +93,6 @@ def send_forgot_password_otp(email_address: str, db):
     response = send_email(email_address, subject, content)
 
     if not response.get("success"):
-        return {
-            "success": False,
-            "message": "OTP saved but email delivery failed"
-        }
+        return {"success": False, "message": "OTP saved but email delivery failed"}
 
     return {"success": True, "message": "OTP has been sent to your email"}

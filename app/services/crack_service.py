@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from app.models.user import User
 from app.models.crack import Crack
 
@@ -13,7 +13,7 @@ def fetch_cracks_service(user_id: int, db, limit):
         ):  # If limit is provided and greater than 0, apply the limit to the query
             query = query.order_by(Crack.detected_at.desc()).limit(limit)
 
-        cracks = query.all()
+        cracks = query.order_by(Crack.detected_at.desc()).all()
 
         total_cracks = len(cracks)
         # TODO: Add more crack types in the future and update this logic accordingly
@@ -36,12 +36,13 @@ def fetch_cracks_service(user_id: int, db, limit):
         return {"success": False, "message": f"Error fetching cracks: {str(e)}"}
 
 
-def detect_crack_service(file_info: str, confidence_threshold: float, db):
-    # This function is now handled by the CrackClassifier's analyze_and_save method, which returns the confidence and saves the image with the appropriate filename. The service layer can then call that method and extract the confidence from the filename if needed for further processing or database storage.
+def detect_crack_service(file_info: dict, confidence_threshold: float):
+    """Detect cracks in an image or video based on the provided file information."""
     from app.services.crack_classifier import CrackClassifier
+    from app.services.crack_vid_detector import analyze_crack_video
     from pathlib import Path
 
-    file_url = file_info.get("file_url")
+    file_url = file_info.get("url")
     file_type = file_info.get("type")
 
     if file_type == "image":
@@ -57,12 +58,14 @@ def detect_crack_service(file_info: str, confidence_threshold: float, db):
 
     elif file_type == "video":
         # Else, if file is a video, perform video classifier
-        pass
+        result = analyze_crack_video(file_url)
+        return result
+
+    else:
+        raise ValueError(f"Unsupported file type for crack detection: {file_type}")
 
 
-def add_crack_service(
-    user_id: int, file_url: str, probability: float, severity: str, db
-):
+def add_crack_service(user_id: int, crack_data: dict, db):
     """Add a crack for a specific user."""
 
     # Validate user
@@ -70,13 +73,19 @@ def add_crack_service(
     if not user:
         return {"success": False, "message": "User not found"}
 
+    file_url = crack_data.get("file_url")
+    probability = crack_data.get("probability")
+    severity = crack_data.get("severity")
+    filename = crack_data.get("filename")
+
     # Create crack record
     new_crack = Crack(
         user_id=user_id,
         file_url=file_url,
         probability=probability,
         severity=severity,
-        detected_at=datetime.now(timezone.utc),
+        detected_at=datetime.now(timezone.utc),  # Assuming UTC timezone
+        filename=filename,
     )
     db.add(new_crack)
     db.commit()

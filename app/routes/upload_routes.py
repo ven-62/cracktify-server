@@ -7,6 +7,7 @@ from app.utils.uploads import upload_file
 
 router = APIRouter()
 
+
 @router.post("/file")
 async def handle_upload_file(file: UploadFile = File(...)):
     """Handle file upload, save to temp, upload to Cloudinary, and cleanup."""
