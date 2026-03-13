@@ -9,7 +9,7 @@ from app.templates.otp_template import otp_email_template, forgot_password_otp_t
 OTP_EXPIRATION_MINUTES = 5
 
 def send_email_otp(email_address: str, name: str, resend: bool, db):
-    now = datetime.now(timezone(timedelta(hours=8)))  # Assuming UTC+8 timezone
+    now = datetime.now(timezone.utc)  # Assuming UTC timezone
 
     if resend:
         db.query(OTP).filter(OTP.email_address == email_address).delete()
@@ -49,7 +49,7 @@ def send_email_otp(email_address: str, name: str, resend: bool, db):
     return {"success": True, "message": "OTP has been sent to your email"}
 
 def verify_entered_otp(email_address: str, entered_otp: str, db):
-    now = datetime.now(timezone(timedelta(hours=8)))  # Assuming UTC+8 timezone
+    now = datetime.now(timezone.utc)  # Assuming UTC timezone
 
     # Get the latest OTP for this email
     last_otp = db.query(OTP).filter(OTP.email_address == email_address).order_by(OTP.created_at.desc()).first()
@@ -73,8 +73,8 @@ def send_forgot_password_otp(email_address: str, db):
     new_otp = OTP(
         email_address=email_address,
         otp=otp,
-        created_at=datetime.now(timezone(timedelta(hours=8))),  # Assuming UTC+8 timezone
-        expires_at=datetime.now(timezone(timedelta(hours=8))) + timedelta(minutes=OTP_EXPIRATION_MINUTES)  # Assuming UTC+8 timezone
+        created_at=datetime.now(timezone.utc),  # Assuming UTC timezone
+        expires_at=datetime.now(timezone.utc) + timedelta(minutes=OTP_EXPIRATION_MINUTES)  # Assuming UTC timezone
     )
     db.add(new_otp)
     db.commit()

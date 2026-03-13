@@ -33,8 +33,8 @@ def register_user_service(first_name: str, last_name: str, email_address: str, p
         email_address=email_address,
         password_hash=hashed_password,
         avatar_url=DEFAULT_AVATAR,
-        created_at=datetime.now(timezone(timedelta(hours=8))),  # Assuming UTC+8 timezone
-        updated_at=datetime.now(timezone(timedelta(hours=8)))
+        created_at=datetime.now(timezone.utc),  # Assuming UTC timezone
+        updated_at=datetime.now(timezone.utc)
     )
 
     db.add(new_user)
@@ -95,7 +95,7 @@ def forgot_password_service(email_address: str, new_password: str, db):
 
     # Update user's password
     user.password_hash = hashed_password
-    user.updated_at = datetime.now(timezone(timedelta(hours=8)))
+    user.updated_at = datetime.now(timezone.utc)
     db.commit()
 
     return {"success": True, "message": "Password reset successfully"}

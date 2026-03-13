@@ -159,6 +159,9 @@ class CrackClassifier:
             else:
                 severity = "Low"
 
+            if not file_url:
+                raise RuntimeError("Cloudinary upload failed or did not return a secure URL")
+
             return {
                 "file_url": file_url,
                 "filename": filename,

@@ -85,7 +85,7 @@ def add_crack_service(
         file_url=file_url,
         probability=probability,
         severity=severity,
-        detected_at=datetime.now(timezone(timedelta(hours=8))),  # Assuming UTC+8 timezone
+        detected_at=datetime.now(timezone.utc),  # Assuming UTC timezone
         filename=filename
     )
     db.add(new_crack)

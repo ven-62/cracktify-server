@@ -147,7 +147,7 @@ def analyze_crack_video(video_input: str):
             "file_url": file_url,
             "filename": filename,
             "severity": overall_max_severity,
-            "probability": round(overall_max_probability, 2),
+            "probability": overall_max_probability,
         }
 
     finally:
