@@ -17,7 +17,7 @@ def upload_file(file_path, resource_type="auto"):
     """Uploads a file to Cloudinary."""
     try:
         resp = cloudinary.uploader.upload(
-            file_path, use_filename=True, resource_type=resource_type, **{"async": True}
+            file_path, use_filename=True, resource_type=resource_type
         )
         return resp
 
