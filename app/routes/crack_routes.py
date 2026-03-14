@@ -5,6 +5,7 @@ from app.services.crack_service import (
     detect_crack_service,
     fetch_cracks_service,
     add_crack_service,
+    update_crack_service,
     delete_crack_service,
 )
 
@@ -38,6 +39,14 @@ def api_add_crack(data: dict = Body(...), db: Session = Depends(get_db)):
     crack_data = data.get("crack_data")
 
     return add_crack_service(user_id, crack_data, db)
+
+@router.post("/update")
+def api_update_crack(data: dict = Body(...), db: Session = Depends(get_db)):
+    """Endpoint to update an existing crack."""
+    crack_id = data.get("crack_id")
+    updated_data = data.get("updated_data")
+
+    return update_crack_service(crack_id, updated_data, db)
 
 
 @router.post("/delete")

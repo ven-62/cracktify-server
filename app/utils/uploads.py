@@ -15,6 +15,11 @@ cloudinary.config(
 
 def upload_file(file_path, resource_type="auto"):
     """Uploads a file to Cloudinary."""
-    return cloudinary.uploader.upload(
-        file_path, use_filename=True, resource_type=resource_type
-    )
+    try:
+        resp = cloudinary.uploader.upload(
+            file_path, use_filename=True, resource_type=resource_type, **{"async": True}
+        )
+        return resp
+
+    except Exception as e:
+        return {"success": False, "error": str(e)}

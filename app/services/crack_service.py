@@ -98,6 +98,31 @@ def add_crack_service(user_id: int, crack_data: dict, db):
     }
 
 
+def update_crack_service(crack_id: int, updated_data: dict, db):
+    """Update an existing crack by its ID."""
+    try:
+        crack = db.query(Crack).filter(Crack.id == crack_id).first()
+        if not crack:
+            return {"success": False, "message": "Crack not found"}
+
+        # Update fields based on provided data
+        for key, value in updated_data.items():
+            if hasattr(crack, key):
+                setattr(crack, key, value)
+
+        db.commit()
+        db.refresh(crack)
+
+        return {
+            "success": True,
+            "message": "Crack updated successfully",
+            "crack": crack.to_dict(),
+        }
+    
+    except Exception as e:
+        return {"success": False, "message": f"Error updating crack: {str(e)}"}
+
+
 def delete_crack_service(crack_id: int, db):
     """Delete a crack by its ID."""
     try:
