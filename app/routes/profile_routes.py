@@ -17,15 +17,17 @@ from app.services.profile_service import (
 router = APIRouter()
 
 
-@router.post("/update/{user_id}")
+@router.post("/update")
 def api_update_profile(data: dict = Body(...), db: Session = Depends(get_db)):
     profile_data = data.get("profile_data", {})
 
     return update_profile(profile_data, db)
 
 
-@router.get("/{user_id}")
-def api_get_profile(user_id: int, db: Session = Depends(get_db)):
+@router.get("/avatar")
+def api_get_profile(data: dict = Body(...), db: Session = Depends(get_db)):
+    user_id = data.get("user_id")
+
     return get_user(user_id, db)
 
 
