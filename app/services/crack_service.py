@@ -44,25 +44,33 @@ def detect_crack_service(file_info: dict, confidence_threshold: float):
 
     file_url = file_info.get("url")
     file_type = file_info.get("type")
+    try:
 
-    if file_type == "image":
-        # If the file is an image, perform image classifier
-        classifier_path = (
-            Path(__file__).parent.parent / "assets" / "model" / "crackAI.tflite"
-        )
+        if file_type == "image":
+            # If the file is an image, perform image classifier
+            classifier_path = (
+                Path(__file__).parent.parent / "assets" / "model" / "crackAI.tflite"
+            )
 
-        classifier = CrackClassifier(classifier_path)
-        result = classifier.analyze_and_save(file_url, confidence_threshold)
+            classifier = CrackClassifier(classifier_path)
+            result = classifier.analyze_and_save(file_url, confidence_threshold)
 
-        return result
+            return result
 
-    elif file_type == "video":
-        # Else, if file is a video, perform video classifier
-        result = analyze_crack_video(file_url)
-        return result
+        elif file_type == "video":
+            # Else, if file is a video, perform video classifier
+            result = analyze_crack_video(file_url)
+            return result
 
-    else:
-        raise ValueError(f"Unsupported file type for crack detection: {file_type}")
+        else:
+            raise ValueError(f"Unsupported file type for crack detection: {file_type}")
+        
+    except Exception as e:
+        return {"success": False, "message": f"Error during crack detection: {str(e)}"}
+    
+    finally:        # Cleanup the file from cloud storage after processing
+        from app.utils.uploads import delete_file
+        delete_file(file_url)
 
 
 def add_crack_service(user_id: int, crack_data: dict, db):
@@ -125,6 +133,8 @@ def update_crack_service(crack_id: int, updated_data: dict, db):
 
 def delete_crack_service(crack_id: int, db):
     """Delete a crack by its ID."""
+    from app.utils.uploads import delete_file
+
     try:
         crack = db.query(Crack).filter(Crack.id == crack_id).first()
         if not crack:
@@ -132,6 +142,8 @@ def delete_crack_service(crack_id: int, db):
 
         db.delete(crack)
         db.commit()
+
+        delete_file(crack.file_url)
 
         return {"success": True, "message": "Crack deleted successfully"}
     except Exception as e:
