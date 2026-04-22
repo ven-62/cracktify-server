@@ -1,29 +1,27 @@
 import os, json, base64
-from dotenv import load_dotenv
+from app.utils.secrets import get_secret
 
-# Load .env file
-load_dotenv()
-
+secrets = get_secret() # Fetch secrets from AWS Secrets Manager
 
 class Config:
     # Database Configuration
-    DB_HOST = os.getenv("SQLHOST")
-    DB_USER = os.getenv("SQLUSER")
-    DB_PASSWORD = os.getenv("SQLPASSWORD")
-    DB_NAME = os.getenv("SQLDATABASE")
-    DB_PORT = int(os.getenv("SQLPORT", 5432))  # Default to 5432 for PostgreSQL
+    DB_HOST = secrets.get("SQLHOST")
+    DB_USER = secrets.get("SQLUSER")
+    DB_PASSWORD = secrets.get("SQLPASSWORD")
+    DB_NAME = secrets.get("SQLDATABASE")
+    DB_PORT = int(secrets.get("SQLPORT", 5432))  # Default to 5432 for PostgreSQL
 
     # Gmail API Credentials
     CREDS_INFO = json.loads(
-        base64.b64decode(os.getenv("GMAIL_CREDENTIALS")).decode("utf-8")
+        base64.b64decode(secrets.get("GMAIL_CREDENTIALS")).decode("utf-8")
     )
 
-    TOKEN_INFO = json.loads(base64.b64decode(os.getenv("GMAIL_TOKEN")).decode("utf-8"))
+    TOKEN_INFO = json.loads(base64.b64decode(secrets.get("GMAIL_TOKEN")).decode("utf-8"))
 
     # JWT Settings
-    JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+    JWT_SECRET_KEY = secrets.get("JWT_SECRET_KEY")
 
     # Cloudinary Settings
-    CLOUDINARY_CLOUD_NAME = os.getenv("CLOUDINARY_CLOUD_NAME")
-    CLOUDINARY_API_KEY = os.getenv("CLOUDINARY_API_KEY")
-    CLOUDINARY_SECRET_KEY = os.getenv("CLOUDINARY_SECRET_KEY")
+    CLOUDINARY_CLOUD_NAME = secrets.get("CLOUDINARY_CLOUD_NAME")
+    CLOUDINARY_API_KEY = secrets.get("CLOUDINARY_API_KEY")
+    CLOUDINARY_SECRET_KEY = secrets.get("CLOUDINARY_SECRET_KEY")
