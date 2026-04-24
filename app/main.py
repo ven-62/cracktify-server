@@ -1,8 +1,8 @@
 import tempfile
 from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from database.db import engine, Base
-from routes import (
+from app.database.db import engine, Base
+from app.routes import (
     otp_routes,
     auth_routes,
     profile_routes,
@@ -10,7 +10,7 @@ from routes import (
     upload_routes,
 )
 
-import models
+import app.models
 
 app = FastAPI(title="Cracktify API", version="1.0.0")
 
