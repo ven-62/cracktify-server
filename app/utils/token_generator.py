@@ -1,6 +1,6 @@
 import jwt
 from datetime import datetime, timezone, timedelta
-from config import Config
+from app.config import Config
 
 SECRET_KEY = Config.JWT_SECRET_KEY
 

@@ -1,0 +1,38 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# Git
+.git/
+.gitignore
+
+# Environment variables
+.env
+
+# Docker / deployment files not needed in image
+Dockerfile
+docker-compose.yml
+.github/
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Local build artifacts
+build/
+dist/
+*.egg-info/

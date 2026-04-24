@@ -2,7 +2,7 @@ import base64
 from email.mime.text import MIMEText
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
-from config import Config
+from app.config import Config
 
 SCOPES = ["https://www.googleapis.com/auth/gmail.send"]
 

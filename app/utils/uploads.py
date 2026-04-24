@@ -2,7 +2,7 @@ import cloudinary
 import cloudinary.uploader
 from cloudinary.utils import cloudinary_url
 
-from config import Config
+from app.config import Config
 
 # Configuration
 cloudinary.config(

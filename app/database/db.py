@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy.exc import SQLAlchemyError
-from config import Config
+from app.config import Config
 
 # DATABASE CONFIGURATION
 DB_HOST = Config.DB_HOST

@@ -1,5 +1,5 @@
 import os, json, base64
-from app.utils.secrets import get_secret
+from utils.secrets import get_secret
 
 secrets = get_secret() # Fetch secrets from AWS Secrets Manager
 

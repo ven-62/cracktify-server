@@ -2,7 +2,7 @@ from datetime import datetime, timezone, timedelta
 from app.models.user import User
 from app.utils.password import hash_password, verify_password
 from app.utils.token_generator import generate_jwt
-from config import Config
+from app.config import Config
 
 DEFAULT_AVATAR = "https://www.gravatar.com/avatar/?d=mp&s=200"
 
