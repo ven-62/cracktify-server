@@ -20,15 +20,33 @@ def check_email_unique_service(email_address: str, db):
 
     return {"success": True, "message": "Email is unique"}
 
+def check_username_unique_service(username: str, db):
+    """Check if the username is already registered."""
+    # Query the database to find a user with the given username
+    user = db.query(User).filter(User.username == username).first()
+
+    if user:
+        return {
+            "success": False,
+            "message": "Username is already taken",
+        }  # If username found, return not unique
+
+    return {"success": True, "message": "Username is unique"}
+
 
 def register_user_service(
-    first_name: str, last_name: str, email_address: str, password: str, db
+    first_name: str, last_name: str, username: str, email_address: str, password: str, db
 ):
     """Register a new user."""
     # Check if user already exists
     existing_user = db.query(User).filter(User.email_address == email_address).first()
     if existing_user:
         return {"success": False, "message": "User already exists"}
+
+    # Check if username is unique
+    username_check = check_username_unique_service(username, db)
+    if not username_check["success"]:
+        return username_check
 
     # Hash the password
     hashed_password = hash_password(password)
@@ -38,8 +56,10 @@ def register_user_service(
         first_name=first_name,
         last_name=last_name,
         email_address=email_address,
+        username=username,
         password_hash=hashed_password,
         avatar_url=DEFAULT_AVATAR,
+        is_expert=False,
         created_at=datetime.now(timezone.utc),  # Assuming UTC timezone
         updated_at=datetime.now(timezone.utc),
     )
@@ -59,22 +79,34 @@ def register_user_service(
             "id": new_user.id,
             "first_name": new_user.first_name,
             "last_name": new_user.last_name,
+            "username": new_user.username,
             "email_address": new_user.email_address,
             "avatar_url": new_user.avatar_url,
+            "is_expert": new_user.is_expert,
         },
     }
 
 
-def login_user_service(email_address: str, password: str, db):
-    """Authenticate a user by email and password."""
-    # Find user by email
-    user = db.query(User).filter(User.email_address == email_address).first()
+def login_user_service(user: str, password: str, db):
+    """Authenticate a user by username or email, and password."""
+    # Determine if the user input is an email or username
+    if "@" in user:
+        email_address = user
+        username = None
+    else:
+        email_address = None
+        username = user
+
+    # Find user by email or username
+    user = db.query(User).filter(
+        (User.email_address == email_address) | (User.username == username)
+    ).first()
     if not user:
-        return {"success": False, "message": "Invalid email or password"}
+        return {"success": False, "message": "Invalid username or password"}
 
     # Verify password
     if not verify_password(password, user.password_hash):
-        return {"success": False, "message": "Invalid email or password"}
+        return {"success": False, "message": "Invalid username or password"}
 
     token = generate_jwt(user.id, user.email_address)
 
@@ -87,7 +119,9 @@ def login_user_service(email_address: str, password: str, db):
             "first_name": user.first_name,
             "last_name": user.last_name,
             "email_address": user.email_address,
+            "username": user.username,
             "avatar_url": user.avatar_url,
+            "is_expert": user.is_expert,
         },
     }
 

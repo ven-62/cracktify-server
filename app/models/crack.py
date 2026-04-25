@@ -13,6 +13,7 @@ class Crack(Base):
     filename = Column(Text, nullable=False)
     probability = Column(Float)
     severity = Column(String(50))
+    remark = Column(Text, nullable=True)
     detected_at = Column(DateTime, default=datetime.now(timezone.utc))
 
     user = relationship("User", back_populates="cracks")
@@ -25,5 +26,6 @@ class Crack(Base):
             "filename": self.filename,
             "probability": self.probability,
             "severity": self.severity,
+            "remark": self.remark,
             "detected_at": self.detected_at.isoformat(),
         }
