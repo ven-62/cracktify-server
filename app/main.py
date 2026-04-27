@@ -1,7 +1,7 @@
 import tempfile
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.database.db import engine, Base
+
 from app.routes import (
     otp_routes,
     auth_routes,
@@ -21,9 +21,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Create tables
-Base.metadata.create_all(bind=engine)
 
 app.include_router(otp_routes.router, prefix="/otp", tags=["OTP"])
 app.include_router(auth_routes.router, prefix="/auth", tags=["Auth"])
