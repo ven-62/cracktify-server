@@ -3,12 +3,12 @@ from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Text, Floa
 from sqlalchemy.orm import relationship
 from app.database.db import Base
 
-
 class Crack(Base):
     __tablename__ = "cracks"
 
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+
     file_url = Column(Text, nullable=False)
     filename = Column(Text, nullable=False)
     probability = Column(Float)
@@ -17,6 +17,7 @@ class Crack(Base):
     detected_at = Column(DateTime, default=datetime.now(timezone.utc))
 
     user = relationship("User", back_populates="cracks")
+    notifications = relationship("Notification", back_populates="crack")
 
     def to_dict(self):
         return {

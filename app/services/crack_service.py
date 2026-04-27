@@ -35,7 +35,21 @@ def fetch_cracks_service(user_id: int, db, limit):
     except Exception as e:
         return {"success": False, "message": f"Error fetching cracks: {str(e)}"}
 
+def get_one_crack_service(crack_id: int, db):
+    """Fetch a single crack by its ID."""
+    try:
+        crack = db.query(Crack).filter(Crack.id == crack_id).first()
+        if not crack:
+            return {"success": False, "message": "Crack not found"}
 
+        return {
+            "success": True,
+            "message": "Crack fetched successfully",
+            "crack": crack.to_dict(),
+        }
+    except Exception as e:
+        return {"success": False, "message": f"Error fetching crack: {str(e)}"}
+    
 def detect_crack_service(file_info: dict, confidence_threshold: float):
     """Detect cracks in an image or video based on the provided file information."""
     from app.services.crack_classifier import CrackClassifier

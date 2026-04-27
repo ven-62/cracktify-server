@@ -35,7 +35,7 @@ def check_username_unique_service(username: str, db):
 
 
 def register_user_service(
-    first_name: str, last_name: str, username: str, email_address: str, password: str, db
+    first_name: str, last_name: str, username: str, email_address: str, password: str, is_engineer: bool, db
 ):
     """Register a new user."""
     # Check if user already exists
@@ -59,7 +59,8 @@ def register_user_service(
         username=username,
         password_hash=hashed_password,
         avatar_url=DEFAULT_AVATAR,
-        is_expert=False,
+        is_engineer=is_engineer,
+        verified=False,
         created_at=datetime.now(timezone.utc),  # Assuming UTC timezone
         updated_at=datetime.now(timezone.utc),
     )
@@ -82,7 +83,8 @@ def register_user_service(
             "username": new_user.username,
             "email_address": new_user.email_address,
             "avatar_url": new_user.avatar_url,
-            "is_expert": new_user.is_expert,
+            "is_engineer": new_user.is_engineer,
+            "verified": new_user.verified,
         },
     }
 
@@ -121,7 +123,8 @@ def login_user_service(user: str, password: str, db):
             "email_address": user.email_address,
             "username": user.username,
             "avatar_url": user.avatar_url,
-            "is_expert": user.is_expert,
+            "is_engineer": user.is_engineer,
+            "verified": user.verified,
         },
     }
 

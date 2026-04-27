@@ -4,6 +4,7 @@ from app.database.db import get_db
 from app.services.crack_service import (
     detect_crack_service,
     fetch_cracks_service,
+    get_one_crack_service,
     add_crack_service,
     update_crack_service,
     delete_crack_service,
@@ -20,6 +21,12 @@ def api_fetch_cracks(data: dict = Body(...), db: Session = Depends(get_db)):
 
     return fetch_cracks_service(user_id, db, limit=limit)
 
+@router.post("/get-one")
+def api_get_one_crack(data: dict = Body(...), db: Session = Depends(get_db)):
+    """Endpoint to fetch a single crack by its ID."""
+    crack_id = data.get("crack_id")
+
+    return get_one_crack_service(crack_id=crack_id, db=db)
 
 @router.post("/detect")
 def api_detect_crack(data: dict = Body(...)):

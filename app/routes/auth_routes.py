@@ -31,8 +31,9 @@ def api_register_user(data: dict = Body(...), db: Session = Depends(get_db)):
     username = data.get("username")
     email_address = data.get("email_address")
     password = data.get("password")
+    is_engineer = data.get("is_engineer", False)
 
-    return register_user_service(first_name, last_name, username, email_address, password, db)
+    return register_user_service(first_name, last_name, username, email_address, password, is_engineer, db)
 
 
 @router.post("/login")
