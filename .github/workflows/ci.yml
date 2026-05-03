@@ -4,65 +4,50 @@ on:
   push:
     branches:
       - main
-      
+
 jobs:
-  # Check code quality and basic syntax
   check-code:
-    name: Check Code Quality
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
 
-      - name: Install dependencies
-        run: |
+      - run: |
           pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Check Python syntax (compile all files)
-        run: |
-          python -m compileall .
-  
-              
-  # Build and push Docker image to GitHub Container Registry
+      - run: python -m compileall .
+
   build-docker:
-    name: Build and Push Docker Image
     runs-on: ubuntu-latest
-    needs: check-code                    # Runs only if Job 1 passes
-    if: github.event_name == 'push'
+    needs: check-code
     permissions:
       contents: read
       packages: write
-    steps:
-      - name: Get the code
-        uses: actions/checkout@v4
 
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push Docker image
+      - name: Build & Push (NO CACHE)
         run: |
-          docker build -t ghcr.io/${{ github.repository }}:latest .
+          docker build --no-cache -t ghcr.io/${{ github.repository }}:latest .
           docker push ghcr.io/${{ github.repository }}:latest
-          
-  # Deploy to EC2 via SSH
+
   deploy:
     runs-on: ubuntu-latest
     needs: build-docker
 
     steps:
-      - name: Deploy to EC2 via SSH (Docker)
-        uses: appleboy/ssh-action@v1.0.0
+      - uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ec2-user
@@ -72,8 +57,7 @@ jobs:
 
             docker pull ghcr.io/${{ github.repository }}:latest
 
-            docker stop fastapi || true
-            docker rm fastapi || true
+            docker rm -f fastapi || true
 
             docker run -d \
               --name fastapi \
