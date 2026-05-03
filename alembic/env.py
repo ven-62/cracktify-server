@@ -5,6 +5,7 @@ from sqlalchemy import create_engine, pool
 
 from app.config import Config
 from app.database.db import Base
+import app.models
 
 # Alembic config object
 config = context.config
@@ -17,11 +18,7 @@ if config.config_file_name is not None:
 target_metadata = Base.metadata
 
 # Build DB URL from your config
-DATABASE_URL = (
-    f"postgresql+psycopg2://{Config.DB_USER}:{Config.DB_PASSWORD}"
-    f"@{Config.DB_HOST}:{Config.DB_PORT}/{Config.DB_NAME}"
-    "?sslmode=require"
-)
+DATABASE_URL = f"postgresql+psycopg2://{Config.DB_USER}:{Config.DB_PASSWORD}@{Config.DB_HOST}:{Config.DB_PORT}/{Config.DB_NAME}?sslmode=require"
 
 
 def run_migrations_offline():
