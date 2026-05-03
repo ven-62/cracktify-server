@@ -1,4 +1,4 @@
-from contextlib import asynccontextmanager
+import tempfile
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -10,23 +10,9 @@ from app.routes import (
     upload_routes,
 )
 
-from app.database.db import engine, Base
 import app.models
 
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Startup
-    Base.metadata.create_all(bind=engine)
-    yield
-    # Shutdown (nothing needed here)
-
-
-app = FastAPI(
-    title="Cracktify API",
-    version="1.0.0",
-    lifespan=lifespan,
-)
+app = FastAPI(title="Cracktify API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
