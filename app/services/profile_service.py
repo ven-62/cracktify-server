@@ -109,3 +109,31 @@ def delete_account(user_id: int, password: str, db):
     db.commit()
 
     return {"success": True, "message": "Account deleted successfully"}
+
+def get_all_engineers_username(db):
+    """Retrieve all verified engineers' usernames"""
+    engineers = (
+        db.query(User)
+        .filter(User.is_engineer == True, User.verified == True)
+        .all()
+    )
+    engineer_usernames = [engineer.username for engineer in engineers]
+    return {"success": True, "engineers": engineer_usernames}
+
+def assign_engineer_to_user(user_id: int, engineer_id: int, db):
+    """Assign an engineer to a user"""
+    user = db.query(User).filter(User.id == user_id).first()
+    engineer = db.query(User).filter(User.id == engineer_id, User.is_engineer == True).first()
+
+    if not user:
+        return {"success": False, "error": "User not found"}
+    if not engineer:
+        return {"success": False, "error": "Engineer not found"}
+
+    user.assigned_engineer = engineer_id
+    user.updated_at = datetime.now(timezone.utc)  # Assuming UTC timezone
+
+    db.commit()
+    db.refresh(user)
+
+    return {"success": True, "message": f"Engineer {engineer.username} assigned to user {user.username}"}

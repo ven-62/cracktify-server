@@ -7,11 +7,13 @@ from fastapi.responses import FileResponse, StreamingResponse
 from sqlalchemy.orm import Session
 from app.database.db import get_db
 from app.services.profile_service import (
+    assign_engineer_to_user,
     update_profile,
     verify_user_password,
     get_user,
     update_password,
     delete_account,
+    get_all_engineers_username,
 )
 
 router = APIRouter()
@@ -53,3 +55,14 @@ def api_delete_account(data: dict = Body(...), db: Session = Depends(get_db)):
     password = data.get("password")
 
     return delete_account(user_id, password, db)
+
+@router.get("/engineers")
+def api_get_all_engineers_username(db: Session = Depends(get_db)):
+    return get_all_engineers_username(db)
+
+@router.post("/assign_engineer")
+def api_assign_engineer(data: dict = Body(...), db: Session = Depends(get_db)):
+    user_id = data.get("user_id")
+    engineer_id = data.get("engineer_id")
+
+    return assign_engineer_to_user(user_id, engineer_id, db)
