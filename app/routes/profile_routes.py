@@ -9,6 +9,7 @@ from app.database.db import get_db
 from app.services.profile_service import (
     assign_engineer_to_user,
     update_profile,
+    verify_engineer_assignment,
     verify_user_password,
     get_user,
     update_password,
@@ -66,3 +67,12 @@ def api_assign_engineer(data: dict = Body(...), db: Session = Depends(get_db)):
     engineer_id = data.get("engineer_id")
 
     return assign_engineer_to_user(user_id, engineer_id, db)
+
+@router.post("/verify_engineer")
+def api_verify_engineer_assignment(data: dict = Body(...), db: Session = Depends(get_db)):
+    user_id = data.get("user_id")
+    engineer_id = data.get("engineer_id")
+    document_url = data.get("document_url")
+
+    return verify_engineer_assignment(user_id, engineer_id, document_url, db)
+    

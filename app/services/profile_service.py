@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+from app.database import db
 from app.models.user import User
 from app.utils.password import hash_password, verify_password
 
@@ -137,3 +138,36 @@ def assign_engineer_to_user(user_id: int, engineer_id: int, db):
     db.refresh(user)
 
     return {"success": True, "message": f"Engineer {engineer.username} assigned to user {user.username}"}
+
+
+def verify_engineer_assignment(user_id: int, engineer_id: int, document_url: str, db):
+    """Verify that the engineer is assigned to the user and submit the verification document to Cloudinary"""
+    user     = db.query(User).filter(User.id == user_id).first()
+    engineer = db.query(User).filter(User.id == engineer_id, User.is_engineer == True).first()
+
+    if not user:
+        return {"success": False, "error": "User not found"}
+    if not engineer:
+        return {"success": False, "error": "Engineer not found"}
+
+    public_id = document_url.split("/")[-1].split(".")[0]
+
+    # Tag as pending + attach user/engineer IDs as context
+    cloudinary.uploader.add_tag("verification:pending", [public_id])
+    cloudinary.uploader.update_metadata(
+        f"user_id={user_id}|engineer_id={engineer_id}",
+        [public_id]
+    )
+
+    return {"success": True, "message": "Document submitted for verification"}
+
+
+def get_verification_doc(user_id: int):
+    """Search Cloudinary for the user's verification document"""
+
+    import cloudinary.search
+    result = cloudinary.search.Search()\
+        .expression(f"tags:verification:user_{user_id}")\
+        .execute()
+    return result["resources"]  # returns the document with its URL
+
