@@ -61,6 +61,7 @@ def register_user_service(
         avatar_url=DEFAULT_AVATAR,
         is_engineer=is_engineer,
         verified=False,
+        assigned_engineer=None,
         created_at=datetime.now(timezone.utc),  # Assuming UTC timezone
         updated_at=datetime.now(timezone.utc),
     )
@@ -85,6 +86,7 @@ def register_user_service(
             "avatar_url": new_user.avatar_url,
             "is_engineer": new_user.is_engineer,
             "verified": new_user.verified,
+            "assigned_engineer": new_user.assigned_engineer,
         },
     }
 

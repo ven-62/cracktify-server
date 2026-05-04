@@ -1,5 +1,6 @@
 from app.database import db
 from app.models.user import User
+from app.websocket_manager import manager
 
 import cloudinary
 import cloudinary.uploader
@@ -27,18 +28,40 @@ def get_pending_verifications(db):
 
     return {"success": True, "verifications": verifications}
 
-def approve_engineer_verification(public_id: str, engineer_id: int, db):
-    """Approve an engineer's verification by updating their status in the DB and retagging the Cloudinary asset"""
+# def approve_engineer_verification(public_id: str, engineer_id: int, db):
+#     """Approve an engineer's verification by updating their status in the DB and retagging the Cloudinary asset"""
+#     engineer = db.query(User).filter(User.id == engineer_id).first()
+#     if not engineer:
+#         return {"success": False, "error": "Engineer not found"}
+
+#     # Mark engineer as verified in DB
+#     engineer.verified = True
+#     db.commit()
+
+#     # Remove the pending tag from Cloudinary so it doesn't show up again
+#     cloudinary.uploader.remove_tag("verification:pending", [public_id])
+#     cloudinary.uploader.add_tag("verification:approved", [public_id])
+
+#     return {"success": True, "message": f"Engineer {engineer_id} verified"}
+
+# # admin_service.py  — fire notification after approving
+# from app.websocket_manager import manager
+
+async def approve_engineer_verification(public_id: str, engineer_id: int, db):
     engineer = db.query(User).filter(User.id == engineer_id).first()
     if not engineer:
         return {"success": False, "error": "Engineer not found"}
 
-    # Mark engineer as verified in DB
     engineer.verified = True
     db.commit()
 
-    # Remove the pending tag from Cloudinary so it doesn't show up again
     cloudinary.uploader.remove_tag("verification:pending", [public_id])
     cloudinary.uploader.add_tag("verification:approved", [public_id])
+
+    # Push real-time notification to the engineer's client
+    await manager.notify_user(str(engineer_id), {
+        "event": "verification_approved",
+        "message": "Your engineer account has been verified.",
+    })
 
     return {"success": True, "message": f"Engineer {engineer_id} verified"}
