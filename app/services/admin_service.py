@@ -9,7 +9,7 @@ def get_pending_verifications(db):
     """Search Cloudinary for all pending engineer verification documents and return their details"""
 
     result = cloudinary.search.Search()\
-        .expression("tags:verification:pending")\
+        .expression('tags:"verification:pending"')\
         .with_field("tags")\
         .with_field("context")\
         .execute()
