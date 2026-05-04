@@ -4,7 +4,7 @@ from app.config import Config
 
 DB_URL = (
     f"postgresql+psycopg2://{Config.DB_USER}:{Config.DB_PASSWORD}"
-    f"@{Config.DB_HOST}:{Config.DB_PORT}/{Config.DB_NAME}"
+    f"@{Config.DB_HOST}:{Config.DB_PORT}/{Config.DB_NAME}?sslmode=require"
 )
 
 engine = create_engine(DB_URL, pool_pre_ping=True, future=True)
