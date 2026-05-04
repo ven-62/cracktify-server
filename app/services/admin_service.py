@@ -47,6 +47,7 @@ def get_pending_verifications(db):
 # # admin_service.py  — fire notification after approving
 # from app.websocket_manager import manager
 
+# in admin_service.py — save to DB then push via WS
 async def approve_engineer_verification(public_id: str, engineer_id: int, db):
     engineer = db.query(User).filter(User.id == engineer_id).first()
     if not engineer:
@@ -58,10 +59,18 @@ async def approve_engineer_verification(public_id: str, engineer_id: int, db):
     cloudinary.uploader.remove_tag("verification:pending", [public_id])
     cloudinary.uploader.add_tag("verification:approved", [public_id])
 
-    # Push real-time notification to the engineer's client
+    # Save to DB first
+    from app.services.notification_service import create_notification
+
+    notif = create_notification(
+        user_id=engineer_id,
+        message="Your engineer account has been verified.",
+        db=db,
+    )
+
+    # Then push via WS with the DB id so client can reference it
     await manager.notify_user(str(engineer_id), {
-        "event": "verification_approved",
-        "message": "Your engineer account has been verified.",
+        "event": "send_notification",
     })
 
-    return {"success": True, "message": f"Engineer {engineer_id} verified"}
+    return {"success": True}
