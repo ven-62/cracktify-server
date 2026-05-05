@@ -146,7 +146,21 @@ def update_crack_service(crack_id: int, updated_data: dict, db):
     
     except Exception as e:
         return {"success": False, "message": f"Error updating crack: {str(e)}"}
+    
+def has_edit_access(user_id: int, crack_id: int, db):
+    """Check if a user is the engineer assigned to the crack"""
+    try:
+        crack = db.query(Crack).filter(Crack.id == crack_id).first()
+        crack_owner = db.query(User).filter(User.id == crack.user_id).first()
 
+        if crack_owner.assigned_engineer == user_id: # If the user is the assigned engineer for the crack, they have edit access
+            return {"success": True, "can_edit": True}
+        else:
+            return {"success": True, "can_edit": False}
+         
+    except Exception as e:
+        return {"success": False, "message": f"Error checking edit access: {str(e)}"}
+    
 
 def delete_crack_service(crack_id: int, db):
     """Delete a crack by its ID."""

@@ -7,6 +7,7 @@ from app.services.crack_service import (
     get_one_crack_service,
     add_crack_service,
     update_crack_service,
+    has_edit_access,
     delete_crack_service,
 )
 
@@ -54,6 +55,13 @@ def api_update_crack(data: dict = Body(...), db: Session = Depends(get_db)):
     updated_data = data.get("updated_data")
 
     return update_crack_service(crack_id, updated_data, db)
+
+@router.post("/can_edit_by")
+def api_can_edit_by(data: dict = Body(...), db: Session = Depends(get_db)):
+    user_id = data.get("user_id")
+    crack_id = data.get("crack_id")
+
+    return has_edit_access(user_id, crack_id, db)
 
 
 @router.post("/delete")
