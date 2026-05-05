@@ -6,6 +6,9 @@ from app.utils.password import hash_password, verify_password
 from app.websocket_manager import manager
 from app.services.notification_service import create_notification
 
+import cloudinary
+import cloudinary.uploader
+import cloudinary.search
 
 def validate_email_uniqueness(email_address: str, db):
     """Check if the email address is already in use by another user."""
@@ -209,7 +212,6 @@ async def verify_engineer_assignment(user_id: int, license_number: str, document
 def get_verification_doc(user_id: int):
     """Search Cloudinary for the user's verification document"""
 
-    import cloudinary.search
     result = cloudinary.search.Search()\
         .expression(f"tags:verification:user_{user_id}")\
         .execute()
