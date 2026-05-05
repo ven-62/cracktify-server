@@ -143,12 +143,9 @@ def assign_engineer_to_user(user_id: int, engineer_id: int, db):
 def verify_engineer_assignment(user_id: int, license_number: str, document_url: str, db):
     """Verify that the engineer is assigned to the user and submit the verification document to Cloudinary"""
     user = db.query(User).filter(User.id == user_id).first()
-    engineer = db.query(User).filter(User.license_number == license_number, User.is_engineer == True).first()
 
     if not user:
         return {"success": False, "error": "User not found"}
-    if not engineer:
-        return {"success": False, "error": "Engineer not found"}
 
     public_id = document_url.split("/")[-1].split(".")[0]
 
