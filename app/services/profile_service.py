@@ -200,7 +200,7 @@ async def verify_engineer_assignment(user_id: int, license_number: str, document
     public_id = document_url.split("/")[-1].split(".")[0]
 
     # Tag as pending + attach user/engineer IDs as context
-    cloudinary.uploader.add_tag("verification:pending", [public_id])
+    cloudinary.uploader.add_tag("verification-pending", [public_id])
     cloudinary.uploader.add_context(
         f"user_id={user_id}|license_number={license_number}",
         [public_id]
@@ -209,11 +209,11 @@ async def verify_engineer_assignment(user_id: int, license_number: str, document
     return {"success": True, "message": "Document submitted for verification"}
 
 
-def get_verification_doc(user_id: int):
-    """Search Cloudinary for the user's verification document"""
+# def get_verification_doc(user_id: int):
+#     """Search Cloudinary for the user's verification document"""
 
-    result = cloudinary.search.Search()\
-        .expression(f"tags:verification:user_{user_id}")\
-        .execute()
-    return result["resources"]  # returns the document with its URL
+#     result = cloudinary.search.Search()\
+#         .expression(f"tags:verification:user_{user_id}")\
+#         .execute()
+#     return result["resources"]  # returns the document with its URL
 

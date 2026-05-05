@@ -10,7 +10,7 @@ def get_pending_verifications(db):
     """Search Cloudinary for all pending engineer verification documents and return their details."""
     result = (
         cloudinary.search.Search()
-        .expression('tags:"verification:pending"')
+        .expression("tags=verification-pending")
         .with_field("tags")
         .with_field("context")
         .execute()
@@ -20,7 +20,7 @@ def get_pending_verifications(db):
     for resource in result.get("resources", []):
         context = resource.get("context", {}).get("custom", {})
 
-        user = db.query(User).filter(User.id == int(context.get("user_id"))).first()
+        user = db.query(User).filter(User.id == int(context.get("user_id", 0))).first()
         if not user:
             continue
 
@@ -55,8 +55,8 @@ async def approve_engineer_verification(public_id: str, engineer_id: int, db):
     engineer.verified = True
     db.commit()
 
-    cloudinary.uploader.remove_tag("verification:pending", [public_id])
-    cloudinary.uploader.add_tag("verification:approved", [public_id])
+    cloudinary.uploader.remove_tag("verification-pending", [public_id])
+    cloudinary.uploader.add_tag("verification-approved", [public_id])
 
     from app.services.notification_service import create_notification
 
@@ -91,8 +91,8 @@ async def decline_engineer_verification(
     if not engineer:
         return {"success": False, "error": "Engineer not found"}
 
-    cloudinary.uploader.remove_tag("verification:pending", [public_id])
-    cloudinary.uploader.add_tag("verification:declined", [public_id])
+    cloudinary.uploader.remove_tag("verification-pending", [public_id])
+    cloudinary.uploader.add_tag("verification-declined", [public_id])
 
     base_message = "Your engineer verification was declined."
     message = (
