@@ -3,6 +3,9 @@ from app.database import db
 from app.models.user import User
 from app.utils.password import hash_password, verify_password
 
+from app.websocket_manager import manager
+from app.services.notification_service import create_notification
+
 
 def validate_email_uniqueness(email_address: str, db):
     """Check if the email address is already in use by another user."""
@@ -121,9 +124,31 @@ def get_all_engineers_username(db):
     engineer_usernames = [engineer.username for engineer in engineers]
     return {"success": True, "engineers": engineer_usernames}
 
-def assign_engineer_to_user(user_id: int, engineer_id: int, db):
+async def invite_engineer_to_user(user_id: int, engineer_id: int, db):
     """Assign an engineer to a user"""
     user = db.query(User).filter(User.id == user_id).first()
+    engineer = db.query(User).filter(User.id == engineer_id, User.is_engineer == True).first()
+
+    if not user:
+        return {"success": False, "error": "User not found"}
+    if not engineer:
+        return {"success": False, "error": "Engineer not found"}
+
+    # Send a notification to the assigned engineer
+    notif = create_notification(
+        user_id=engineer_id,
+        message=f"You are invited by {user.first_name} {user.last_name} ({user.username}) to be their structural engineer. You can accept or ignore the invitation below.",
+        db=db,
+    )
+
+    await manager.notify_user(str(engineer_id), {
+        "event": "new_assignment",
+        "notification_id": notif.id,
+        "inviter_id": user.id,
+    })
+
+async def accept_engineer_assignment(inviter_id: str, engineer_id: int, db):
+    user = db.query(User).filter(User.id == inviter_id).first()
     engineer = db.query(User).filter(User.id == engineer_id, User.is_engineer == True).first()
 
     if not user:
@@ -137,10 +162,32 @@ def assign_engineer_to_user(user_id: int, engineer_id: int, db):
     db.commit()
     db.refresh(user)
 
+    # Send a notification to the assigned engineer
+    eng_notif = create_notification(
+        user_id=engineer_id,
+        message=f"You have accepted the assignment to be {user.first_name} {user.last_name}'s structural engineer.",
+        db=db,
+    )
+    inv_notif = create_notification(
+        user_id=inviter_id,
+        message=f"{engineer.first_name} {engineer.last_name} ({engineer.username}) has accepted your invitation to be their structural engineer.",
+        db=db,
+    )
+
+    await manager.notify_user(str(engineer_id), {
+        "event": "accepted_assignment",
+        "notification_id": eng_notif.id,
+    })
+
+    await manager.notify_user(str(inviter_id), {
+        "event": "accepted_assignment",
+        "notification_id": inv_notif.id,
+    })
+
     return {"success": True, "message": f"Engineer {engineer.username} assigned to user {user.username}"}
 
 
-def verify_engineer_assignment(user_id: int, license_number: str, document_url: str, db):
+async def verify_engineer_assignment(user_id: int, license_number: str, document_url: str, db):
     """Verify that the engineer is assigned to the user and submit the verification document to Cloudinary"""
     user = db.query(User).filter(User.id == user_id).first()
 

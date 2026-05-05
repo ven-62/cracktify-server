@@ -67,7 +67,7 @@ async def approve_engineer_verification(public_id: str, engineer_id: int, db):
     )
 
     await manager.notify_user(str(engineer_id), {
-        "event": "send_notification",
+        "event": "approved_verification",
         "notification_id": notif.id,
     })
 
@@ -110,7 +110,7 @@ async def decline_engineer_verification(
     )
 
     await manager.notify_user(str(engineer_id), {
-        "event": "send_notification",
+        "event": "declined_verification",
         "notification_id": notif.id,
     })
 

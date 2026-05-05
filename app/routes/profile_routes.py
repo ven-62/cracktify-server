@@ -7,7 +7,8 @@ from fastapi.responses import FileResponse, StreamingResponse
 from sqlalchemy.orm import Session
 from app.database.db import get_db
 from app.services.profile_service import (
-    assign_engineer_to_user,
+    accept_engineer_assignment,
+    invite_engineer_to_user,
     update_profile,
     verify_engineer_assignment,
     verify_user_password,
@@ -61,18 +62,25 @@ def api_delete_account(data: dict = Body(...), db: Session = Depends(get_db)):
 def api_get_all_engineers_username(db: Session = Depends(get_db)):
     return get_all_engineers_username(db)
 
-@router.post("/assign_engineer")
-def api_assign_engineer(data: dict = Body(...), db: Session = Depends(get_db)):
+@router.post("/invite_engineer")
+async def api_invite_engineer(data: dict = Body(...), db: Session = Depends(get_db)):
     user_id = data.get("user_id")
     engineer_id = data.get("engineer_id")
 
-    return assign_engineer_to_user(user_id, engineer_id, db)
+    return await invite_engineer_to_user(user_id, engineer_id, db)
+
+@router.post("/accept_engineer")
+async def api_accept_engineer_assignment(data: dict = Body(...), db: Session = Depends(get_db)):
+    inviter_id = data.get("inviter_id")
+    engineer_id = data.get("engineer_id")
+
+    return await accept_engineer_assignment(inviter_id, engineer_id, db)
 
 @router.post("/verify_engineer")
-def api_verify_engineer_assignment(data: dict = Body(...), db: Session = Depends(get_db)):
+async def api_verify_engineer_assignment(data: dict = Body(...), db: Session = Depends(get_db)):
     user_id = data.get("user_id")
     license_number = data.get("license_number")
     document_url = data.get("document_url")
 
-    return verify_engineer_assignment(user_id, license_number, document_url, db)
+    return await verify_engineer_assignment(user_id, license_number, document_url, db)
     
