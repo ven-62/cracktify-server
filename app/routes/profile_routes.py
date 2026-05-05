@@ -71,8 +71,8 @@ def api_assign_engineer(data: dict = Body(...), db: Session = Depends(get_db)):
 @router.post("/verify_engineer")
 def api_verify_engineer_assignment(data: dict = Body(...), db: Session = Depends(get_db)):
     user_id = data.get("user_id")
-    engineer_id = data.get("engineer_id")
+    license_number = data.get("license_number")
     document_url = data.get("document_url")
 
-    return verify_engineer_assignment(user_id, engineer_id, document_url, db)
+    return verify_engineer_assignment(user_id, license_number, document_url, db)
     

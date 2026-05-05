@@ -6,7 +6,10 @@ from app.models.crack import Crack
 def fetch_cracks_service(user_id: int, db, limit):
     """Fetch cracks for a specific user."""
     try:
-        query = db.query(Crack).filter(Crack.user_id == user_id)
+        if user_id == -1:  # If user_id is -1, fetch all cracks without filtering by user
+            query = db.query(Crack)
+        else:
+            query = db.query(Crack).filter(Crack.user_id == user_id)
 
         if (
             limit and limit > 0

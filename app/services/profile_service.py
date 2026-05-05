@@ -140,10 +140,10 @@ def assign_engineer_to_user(user_id: int, engineer_id: int, db):
     return {"success": True, "message": f"Engineer {engineer.username} assigned to user {user.username}"}
 
 
-def verify_engineer_assignment(user_id: int, engineer_id: int, document_url: str, db):
+def verify_engineer_assignment(user_id: int, license_number: str, document_url: str, db):
     """Verify that the engineer is assigned to the user and submit the verification document to Cloudinary"""
-    user     = db.query(User).filter(User.id == user_id).first()
-    engineer = db.query(User).filter(User.id == engineer_id, User.is_engineer == True).first()
+    user = db.query(User).filter(User.id == user_id).first()
+    engineer = db.query(User).filter(User.license_number == license_number, User.is_engineer == True).first()
 
     if not user:
         return {"success": False, "error": "User not found"}
@@ -155,7 +155,7 @@ def verify_engineer_assignment(user_id: int, engineer_id: int, document_url: str
     # Tag as pending + attach user/engineer IDs as context
     cloudinary.uploader.add_tag("verification:pending", [public_id])
     cloudinary.uploader.update_metadata(
-        f"user_id={user_id}|engineer_id={engineer_id}",
+        f"user_id={user_id}|license_number={license_number}",
         [public_id]
     )
 

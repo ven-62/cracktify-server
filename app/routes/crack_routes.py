@@ -16,7 +16,7 @@ router = APIRouter()
 @router.post("/fetch")
 def api_fetch_cracks(data: dict = Body(...), db: Session = Depends(get_db)):
     """Endpoint to fetch cracks for a specific user."""
-    user_id = data.get("user_id")
+    user_id = data.get("user_id", -1)  # Default to -1 if not provided
     limit = data.get("limit", 0)  # If limit is 0 or not provided, fetch all cracks
 
     return fetch_cracks_service(user_id, db, limit=limit)
@@ -42,7 +42,7 @@ def api_detect_crack(data: dict = Body(...)):
 @router.post("/add")
 def api_add_crack(data: dict = Body(...), db: Session = Depends(get_db)):
     """Endpoint to add a new crack."""
-    user_id = data.get("user_id")
+    user_id = data.get("user_id", -1)  # Default to -1 if not provided
     crack_data = data.get("crack_data")
 
     return add_crack_service(user_id, crack_data, db)
