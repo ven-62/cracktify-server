@@ -201,7 +201,7 @@ async def verify_engineer_assignment(user_id: int, license_number: str, document
 
     # Tag as pending + attach user/engineer IDs as context
     cloudinary.uploader.add_tag("verification:pending", [public_id])
-    cloudinary.uploader.update_metadata(
+    cloudinary.uploader.add_context(
         f"user_id={user_id}|license_number={license_number}",
         [public_id]
     )

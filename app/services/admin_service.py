@@ -20,7 +20,7 @@ def get_pending_verifications(db):
     for resource in result.get("resources", []):
         context = resource.get("context", {}).get("custom", {})
 
-        user = db.query(User).filter(User.id == context.get("user_id")).first()
+        user = db.query(User).filter(User.id == int(context.get("user_id"))).first()
         if not user:
             continue
 
