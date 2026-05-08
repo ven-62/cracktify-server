@@ -127,6 +127,7 @@ def login_user_service(user: str, password: str, db):
             "avatar_url": user.avatar_url,
             "is_engineer": user.is_engineer,
             "verified": user.verified,
+            "assigned_engineer": user.assigned_engineer,
         },
     }
 
