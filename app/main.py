@@ -8,6 +8,7 @@ from app.routes import (
     profile_routes,
     crack_routes,
     upload_routes,
+    notification_routes,
     admin_route,
     ws_route
 )
@@ -42,6 +43,7 @@ app.include_router(auth_routes.router, prefix="/auth", tags=["Auth"])
 app.include_router(profile_routes.router, prefix="/profile", tags=["Profile"])
 app.include_router(crack_routes.router, prefix="/cracks", tags=["Cracks"])
 app.include_router(upload_routes.router, prefix="/upload", tags=["Uploads"])
+app.include_router(notification_routes.router, prefix="/notifications", tags=["Notifications"])
 app.include_router(admin_route.router, prefix="/admin", tags=["Admin"])
 app.include_router(ws_route.router, prefix="/ws", tags=["WebSocket"])
 

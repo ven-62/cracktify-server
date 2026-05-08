@@ -5,7 +5,6 @@ import cloudinary
 import cloudinary.uploader
 import cloudinary.search
 
-
 def get_pending_verifications(db):
     """Search Cloudinary for all pending engineer verification documents and return their details."""
     result = (

@@ -8,7 +8,7 @@ from app.services.notification_service import (
     delete_notification,
 )
 
-router = APIRouter(prefix="/notifications", tags=["Notifications"])
+router = APIRouter()
 
 @router.get("/{user_id}")
 def fetch_notifications(user_id: int, db=Depends(get_db)):
