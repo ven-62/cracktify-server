@@ -18,24 +18,26 @@ def get_pending_verifications(db):
 
     verifications = []
     for resource in result.get("resources", []):
-        context = resource.get("context", {}).get("custom", {})
+        context = resource.get("context", {})
 
         user = db.query(User).filter(User.id == int(context.get("user_id", 0))).first()
         if not user:
             continue
 
-        verifications.append({
-            "user":           user.username,
-            "first_name":     user.first_name,
-            "last_name":      user.last_name,
-            "email":          user.email_address,
-            "image_url":      user.image_url,
-            "public_id":      resource["public_id"],
-            "document_url":   resource["secure_url"],
-            "user_id":        context.get("user_id"),
-            "license_number": context.get("license_number"),
-            "uploaded_at":    resource["created_at"],
-        })
+        verifications.append(
+            {
+                "user": user.username,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "email_address": user.email_address,
+                "avatar_url": user.avatar_url,
+                "public_id": resource.get("public_id"),
+                "document_url": resource.get("secure_url"),
+                "user_id": context.get("user_id"),
+                "license_number": context.get("license_number"),
+                "uploaded_at": resource.get("created_at"),
+            }
+        )
 
     return {"success": True, "verifications": verifications}
 
@@ -66,10 +68,13 @@ async def approve_engineer_verification(public_id: str, engineer_id: int, db):
         db=db,
     )
 
-    await manager.notify_user(str(engineer_id), {
-        "event": "approved_verification",
-        "notification_id": notif.id,
-    })
+    await manager.notify_user(
+        str(engineer_id),
+        {
+            "event": "approved_verification",
+            "notification_id": notif.id,
+        },
+    )
 
     return {"success": True}
 
@@ -109,9 +114,13 @@ async def decline_engineer_verification(
         db=db,
     )
 
-    await manager.notify_user(str(engineer_id), {
-        "event": "declined_verification",
-        "notification_id": notif.id,
-    })
+    # FIX: ensure the engineer receives the notification about their declined verification
+    await manager.notify_user(
+        str(engineer_id),
+        {
+            "event": "declined_verification",
+            "notification_id": notif.id,
+        },
+    )
 
     return {"success": True}

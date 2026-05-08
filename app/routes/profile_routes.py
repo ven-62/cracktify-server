@@ -16,24 +16,23 @@ from app.services.profile_service import (
     update_password,
     delete_account,
     get_all_engineers_username,
+    get_associated_users
 )
 
 router = APIRouter()
 
+
+@router.get("/")
+def api_get_profile(data: dict = Body(...), db: Session = Depends(get_db)):
+    user_id = data.get("user_id")
+
+    return get_user(user_id, db)
 
 @router.post("/update")
 def api_update_profile(data: dict = Body(...), db: Session = Depends(get_db)):
     profile_data = data.get("profile_data", {})
 
     return update_profile(profile_data, db)
-
-
-@router.get("/avatar")
-def api_get_profile(data: dict = Body(...), db: Session = Depends(get_db)):
-    user_id = data.get("user_id")
-
-    return get_user(user_id, db)
-
 
 @router.post("/verify_password")
 def api_verify_user_password(data: dict = Body(...), db: Session = Depends(get_db)):
@@ -84,3 +83,8 @@ async def api_verify_engineer_assignment(data: dict = Body(...), db: Session = D
 
     return await verify_engineer_assignment(user_id, license_number, document_url, db)
     
+@router.get("/get_associated_users")
+def api_get_associated_users(data: dict = Body(...), db: Session = Depends(get_db)):
+    eng_id = data.get("user_id")
+
+    return get_associated_users(eng_id, db)

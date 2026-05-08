@@ -9,8 +9,8 @@ from app.routes import (
     crack_routes,
     upload_routes,
     admin_route,
+    ws_route
 )
-from app.routes.ws_route import router as ws_router
 from app.database.db import engine, Base
 import app.models
 
@@ -25,7 +25,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Cracktify API",
-    version="1.0.0",
+    version="1.7.0",
     lifespan=lifespan,
 )
 
@@ -43,7 +43,7 @@ app.include_router(profile_routes.router, prefix="/profile", tags=["Profile"])
 app.include_router(crack_routes.router, prefix="/cracks", tags=["Cracks"])
 app.include_router(upload_routes.router, prefix="/upload", tags=["Uploads"])
 app.include_router(admin_route.router, prefix="/admin", tags=["Admin"])
-app.include_router(ws_router)
+app.include_router(ws_route.router, prefix="/ws", tags=["WebSocket"])
 
 
 @app.get("/")

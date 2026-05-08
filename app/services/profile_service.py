@@ -50,6 +50,9 @@ def update_profile(profile_data: dict, db):
         "last_name": user.last_name,
         "email_address": user.email_address,
         "avatar_url": user.avatar_url,
+        "is_engineer": user.is_engineer,
+        "verified": user.verified,
+        "assigned_engineer": user.assigned_engineer,
     }
 
     return {"success": True, "user": user_data}
@@ -66,7 +69,11 @@ def get_user(user_id: int, db):
         "first_name": user.first_name,
         "last_name": user.last_name,
         "email_address": user.email_address,
+        "username": user.username,
         "avatar_url": user.avatar_url,
+        "is_engineer": user.is_engineer,
+        "verified": user.verified,
+        "assigned_engineer": user.assigned_engineer,
     }
     return {"success": True, "user": user_data}
 
@@ -217,3 +224,17 @@ async def verify_engineer_assignment(user_id: int, license_number: str, document
 #         .execute()
 #     return result["resources"]  # returns the document with its URL
 
+def get_associated_users(eng_id: int, db):
+    """Get all users associated with a given engineer"""
+    users = db.query(User).filter(User.assigned_engineer == eng_id).all()
+    user_data = []
+    for user in users:
+        user_data.append({
+            "id": user.id,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "email_address": user.email_address,
+            "username": user.username,
+            "avatar_url": user.avatar_url,
+        })
+    return {"success": True, "associated_users": user_data}
