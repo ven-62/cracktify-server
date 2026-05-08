@@ -64,9 +64,9 @@ def api_get_all_engineers_username(db: Session = Depends(get_db)):
 @router.post("/invite_engineer")
 async def api_invite_engineer(data: dict = Body(...), db: Session = Depends(get_db)):
     user_id = data.get("user_id")
-    engineer_id = data.get("engineer_id")
+    engineer_username = data.get("engineer_username")
 
-    return await invite_engineer_to_user(user_id, engineer_id, db)
+    return await invite_engineer_to_user(user_id, engineer_username, db)
 
 @router.post("/accept_engineer")
 async def api_accept_engineer_assignment(data: dict = Body(...), db: Session = Depends(get_db)):

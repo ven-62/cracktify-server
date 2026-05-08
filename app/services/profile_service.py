@@ -134,10 +134,10 @@ def get_all_engineers_username(db):
     engineer_usernames = [engineer.username for engineer in engineers]
     return {"success": True, "engineers": engineer_usernames}
 
-async def invite_engineer_to_user(user_id: int, engineer_id: int, db):
+async def invite_engineer_to_user(user_id: int, engineer_username: str, db):
     """Assign an engineer to a user"""
     user = db.query(User).filter(User.id == user_id).first()
-    engineer = db.query(User).filter(User.id == engineer_id, User.is_engineer == True).first()
+    engineer = db.query(User).filter(User.username == engineer_username, User.is_engineer == True).first()
 
     if not user:
         return {"success": False, "error": "User not found"}
@@ -146,12 +146,12 @@ async def invite_engineer_to_user(user_id: int, engineer_id: int, db):
 
     # Send a notification to the assigned engineer
     notif = create_notification(
-        user_id=engineer_id,
+        user_id=engineer.id,
         message=f"You are invited by {user.first_name} {user.last_name} ({user.username}) to be their structural engineer. You can accept or ignore the invitation below.",
         db=db,
     )
 
-    await manager.notify_user(str(engineer_id), {
+    await manager.notify_user(str(engineer.id), {
         "event": "new_assignment",
         "notification_id": notif.id,
         "inviter_id": user.id,

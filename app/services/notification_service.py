@@ -7,6 +7,12 @@ def get_user_notifications(user_id: int, db):
     ).order_by(Notification.created_at.desc()).all()
     return {"notifications": [n.to_dict() for n in notifs]}
 
+def get_notification(notification_id: int, db):
+    notif = db.query(Notification).filter(Notification.id == notification_id).first()
+    if not notif:
+        return {"success": False, "error": "Not found"}
+    return {"success": True, "notification": notif.to_dict()}
+
 def mark_notification_read(notification_id: int, is_read: bool, db):
     notif = db.query(Notification).filter(Notification.id == notification_id).first()
     if not notif:

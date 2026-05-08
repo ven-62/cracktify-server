@@ -3,6 +3,7 @@ from fastapi import APIRouter, Body, Depends
 from sqlalchemy.orm import Session
 from app.database.db import get_db
 from app.services.notification_service import (
+    get_notification,
     get_user_notifications,
     mark_notification_read,
     delete_notification,
@@ -10,10 +11,15 @@ from app.services.notification_service import (
 
 router = APIRouter()
 
-@router.get("/{user_id}")
+@router.get("/user/{user_id}")
 def fetch_notifications(user_id: int, db=Depends(get_db)):
     """Endpoint to fetch all notifications for a specific user."""
     return get_user_notifications(user_id, db)
+
+@router.get("/{notification_id}")
+def fetch_notification(notification_id: int, db=Depends(get_db)):
+    """Endpoint to fetch a specific notification by ID."""
+    return get_notification(notification_id, db)
 
 @router.post("/mark-read")
 def mark_read(data: dict = Body(...), db: Session = Depends(get_db)):
