@@ -12,6 +12,7 @@ router = APIRouter()
 
 @router.post("/send-otp")
 def api_send_otp(data: dict = Body(...), db: Session = Depends(get_db)):
+    """Endpoint to send an OTP to the user's email address."""
     email_address = data.get("email_address")
     name = data.get("name")
     resend = data.get("resend", False)
@@ -21,6 +22,7 @@ def api_send_otp(data: dict = Body(...), db: Session = Depends(get_db)):
 
 @router.post("/verify-otp")
 def api_verify_otp(data: dict = Body(...), db: Session = Depends(get_db)):
+    """Endpoint to verify the OTP entered by the user."""
     email_address = data.get("email_address")
     otp = data.get("entered_otp")
 
@@ -29,6 +31,7 @@ def api_verify_otp(data: dict = Body(...), db: Session = Depends(get_db)):
 
 @router.post("/send-forgot-password-otp")
 def api_send_forgot_password_otp(data: dict = Body(...), db: Session = Depends(get_db)):
+    """Endpoint to send a forgot password OTP to the user's email address."""
     email_address = data.get("email_address")
 
     return send_forgot_password_otp(email_address, db)

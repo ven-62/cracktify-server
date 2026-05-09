@@ -14,6 +14,7 @@ router = APIRouter()
 
 @router.post("/check-uniqueness")
 def api_check_email_unique(data: dict = Body(...), db: Session = Depends(get_db)):
+    """Check if an email or username is unique."""
     field = data.get("field")
     check_type = data.get("check_type")
 
@@ -24,8 +25,10 @@ def api_check_email_unique(data: dict = Body(...), db: Session = Depends(get_db)
     else:
         return {"success": False, "message": "Invalid check type"}
 
+
 @router.post("/register")
 def api_register_user(data: dict = Body(...), db: Session = Depends(get_db)):
+    """Register a new user (engineer or regular)."""
     first_name = data.get("first_name")
     last_name = data.get("last_name")
     username = data.get("username")
@@ -33,11 +36,14 @@ def api_register_user(data: dict = Body(...), db: Session = Depends(get_db)):
     password = data.get("password")
     is_engineer = data.get("is_engineer", False)
 
-    return register_user_service(first_name, last_name, username, email_address, password, is_engineer, db)
+    return register_user_service(
+        first_name, last_name, username, email_address, password, is_engineer, db
+    )
 
 
 @router.post("/login")
 def api_login_user(data: dict = Body(...), db: Session = Depends(get_db)):
+    """Log in an existing user."""
     user = data.get("user")
     password = data.get("password")
 
@@ -46,6 +52,7 @@ def api_login_user(data: dict = Body(...), db: Session = Depends(get_db)):
 
 @router.post("/forgot-password")
 def api_forgot_password(data: dict = Body(...), db: Session = Depends(get_db)):
+    """Handle forgot password requests."""
     email_address = data.get("email_address")
     new_password = data.get("new_password")
 

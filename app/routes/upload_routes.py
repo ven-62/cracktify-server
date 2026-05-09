@@ -22,10 +22,12 @@ async def handle_upload_file(file: UploadFile = File(...)):
         # Upload to Cloudinary
         result = upload_file(temp_file_path)
 
-        if not result.get("success", True): # If upload_file returns a dict with success=False, handle it
+        if not result.get(
+            "success", True
+        ):  # If upload_file returns a dict with success=False, handle it
             return {"success": False, "error": result.get("error", "Unknown error")}
 
-        return { # If upload_file returns the expected Cloudinary response, return success with details
+        return {  # If upload_file returns the expected Cloudinary response, return success with details
             "success": True,
             "url": result["secure_url"],
             "filename": result["original_filename"],

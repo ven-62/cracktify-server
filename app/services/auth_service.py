@@ -20,6 +20,7 @@ def check_email_unique_service(email_address: str, db):
 
     return {"success": True, "message": "Email is unique"}
 
+
 def check_username_unique_service(username: str, db):
     """Check if the username is already registered."""
     # Query the database to find a user with the given username
@@ -35,7 +36,13 @@ def check_username_unique_service(username: str, db):
 
 
 def register_user_service(
-    first_name: str, last_name: str, username: str, email_address: str, password: str, is_engineer: bool, db
+    first_name: str,
+    last_name: str,
+    username: str,
+    email_address: str,
+    password: str,
+    is_engineer: bool,
+    db,
 ):
     """Register a new user."""
     # Check if user already exists
@@ -102,9 +109,11 @@ def login_user_service(user: str, password: str, db):
         username = user
 
     # Find user by email or username
-    user = db.query(User).filter(
-        (User.email_address == email_address) | (User.username == username)
-    ).first()
+    user = (
+        db.query(User)
+        .filter((User.email_address == email_address) | (User.username == username))
+        .first()
+    )
     if not user:
         return {"success": False, "message": "Invalid username or password"}
 

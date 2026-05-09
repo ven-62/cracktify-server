@@ -6,7 +6,9 @@ from app.models.crack import Crack
 def fetch_cracks_service(user_id: int, db, limit):
     """Fetch cracks for a specific user."""
     try:
-        if user_id == -1:  # If user_id is -1, fetch all cracks without filtering by user
+        if (
+            user_id == -1
+        ):  # If user_id is -1, fetch all cracks without filtering by user
             query = db.query(Crack)
         else:
             query = db.query(Crack).filter(Crack.user_id == user_id)
@@ -38,6 +40,7 @@ def fetch_cracks_service(user_id: int, db, limit):
     except Exception as e:
         return {"success": False, "message": f"Error fetching cracks: {str(e)}"}
 
+
 def get_one_crack_service(crack_id: int, db):
     """Fetch a single crack by its ID."""
     try:
@@ -52,7 +55,8 @@ def get_one_crack_service(crack_id: int, db):
         }
     except Exception as e:
         return {"success": False, "message": f"Error fetching crack: {str(e)}"}
-    
+
+
 def detect_crack_service(file_info: dict, confidence_threshold: float):
     """Detect cracks in an image or video based on the provided file information."""
     from app.services.crack_classifier import CrackClassifier
@@ -81,12 +85,13 @@ def detect_crack_service(file_info: dict, confidence_threshold: float):
 
         else:
             raise ValueError(f"Unsupported file type for crack detection: {file_type}")
-        
+
     except Exception as e:
         return {"success": False, "message": f"Error during crack detection: {str(e)}"}
-    
-    finally:        # Cleanup the file from cloud storage after processing
+
+    finally:  # Cleanup the file from cloud storage after processing
         from app.utils.uploads import delete_file
+
         delete_file(file_url)
 
 
@@ -143,24 +148,27 @@ def update_crack_service(crack_id: int, updated_data: dict, db):
             "message": "Crack updated successfully",
             "crack": crack.to_dict(),
         }
-    
+
     except Exception as e:
         return {"success": False, "message": f"Error updating crack: {str(e)}"}
-    
+
+
 def has_edit_access(user_id: int, crack_id: int, db):
     """Check if a user is the engineer assigned to the crack"""
     try:
         crack = db.query(Crack).filter(Crack.id == crack_id).first()
         crack_owner = db.query(User).filter(User.id == crack.user_id).first()
 
-        if crack_owner.assigned_engineer == user_id: # If the user is the assigned engineer for the crack, they have edit access
+        if (
+            crack_owner.assigned_engineer == user_id
+        ):  # If the user is the assigned engineer for the crack, they have edit access
             return {"success": True, "can_edit": True}
         else:
             return {"success": True, "can_edit": False}
-         
+
     except Exception as e:
         return {"success": False, "message": f"Error checking edit access: {str(e)}"}
-    
+
 
 def delete_crack_service(crack_id: int, db):
     """Delete a crack by its ID."""
