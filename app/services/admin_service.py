@@ -50,9 +50,8 @@ async def approve_engineer_verification(public_id: str, engineer_id: int, db):
       4. Push a real-time WebSocket event to the engineer.
     """
     engineer = db.query(User).filter(User.id == engineer_id).first()
-    if not engineer:
-        return {"success": False, "error": "Engineer not found"}
-
+   
+    engineer.is_engineer = True
     engineer.verified = True
     db.commit()
 
