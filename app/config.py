@@ -11,6 +11,10 @@ class Config:
     DB_NAME = secrets.get("SQLDATABASE")
     DB_PORT = int(secrets.get("SQLPORT", 5432))  # Default to 5432 for PostgreSQL
 
+    ADMIN_USER = secrets.get("ADMIN_USER", "")
+    ADMIN_PASSWORD = secrets.get("ADMIN_PASSWORD", "")
+    ADMIN_EMAIL = secrets.get("ADMIN_EMAIL", "")
+
     # Gmail API Credentials
     CREDS_INFO = json.loads(
         base64.b64decode(secrets.get("GMAIL_CREDENTIALS")).decode("utf-8")

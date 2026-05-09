@@ -107,6 +107,15 @@ def login_user_service(user: str, password: str, db):
     else:
         email_address = None
         username = user
+    
+    if (email_address == Config.ADMIN_EMAIL or username == Config.ADMIN_USER) and verify_password(password, Config.ADMIN_PASSWORD):
+        token = generate_jwt(-1, Config.ADMIN_EMAIL)  # Using -1 as user_id for admin
+        return {
+            "success": True,
+            "message": "Admin login successful",
+            "token": token,
+            "is_admin": True,
+        }
 
     # Find user by email or username
     user = (
