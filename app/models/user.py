@@ -29,7 +29,7 @@ class User(Base):
 
     # Relationships
     cracks = relationship("Crack", back_populates="user")
-    notifications = relationship("Notification", back_populates="user")
+    notifications = relationship("Notification", back_populates="user", foreign_keys="Notification.user_id")
 
     assigned_engineer_user = relationship(
         "User",
