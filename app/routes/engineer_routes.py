@@ -50,9 +50,7 @@ async def api_verify_engineer_assignment(
     return await verify_engineer_assignment(user_id, license_number, document_url, db)
 
 
-@router.get("/get_associated_users")
-def api_get_associated_users(data: dict = Body(...), db: Session = Depends(get_db)):
+@router.get("/get_associated_users/{user_id}")
+def api_get_associated_users(user_id: str, db: Session = Depends(get_db)):
     """Endpoint to retrieve all users associated with a specific engineer."""
-    eng_id = data.get("user_id")
-
-    return get_associated_users(eng_id, db)
+    return get_associated_users(int(user_id), db)
