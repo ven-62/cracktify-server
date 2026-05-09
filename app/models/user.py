@@ -29,15 +29,22 @@ class User(Base):
 
     # Relationships
     cracks = relationship("Crack", back_populates="user")
-    notifications = relationship("Notification", back_populates="user", foreign_keys="Notification.user_id")
-
+    notifications = relationship(
+        "Notification",
+        foreign_keys="Notification.user_id",
+        back_populates="user",
+        )
+    
     assigned_engineer_user = relationship(
         "User",
         remote_side=[id],
         foreign_keys=[assigned_engineer],
+        overlaps="assigned_users"
     )
 
     assigned_users = relationship(
         "User",
         foreign_keys=[assigned_engineer],
+        primaryjoin="User.assigned_engineer == User.id",
+        overlaps="assigned_engineer_user"
     )

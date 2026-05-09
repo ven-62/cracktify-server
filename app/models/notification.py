@@ -10,14 +10,13 @@ class Notification(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     crack_id = Column(Integer, ForeignKey("cracks.id"), nullable=True)
+    inviter_id = Column(Integer, ForeignKey("users.id"), nullable=True)
 
     message = Column(Text, nullable=False)
     is_read = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.now(timezone.utc))
 
-    inviter_id = Column(Integer, ForeignKey("users.id"), nullable=True)
-
-    user = relationship("User", back_populates="notifications")
+    user = relationship("User", foreign_keys=[user_id], back_populates="notifications")
     crack = relationship("Crack", back_populates="notifications")
     inviter = relationship("User", foreign_keys=[inviter_id])
 
