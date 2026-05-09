@@ -37,9 +37,21 @@ def delete_notification(notification_id: int, db):
     return {"success": True}
 
 
-def create_notification(user_id: int, message: str, crack_id: int = None, db=None):
-    notif = Notification(user_id=user_id, message=message, crack_id=crack_id)
+def create_notification(
+    user_id: int,
+    message: str,
+    crack_id: int = None,
+    inviter_id: int = None,
+    db=None,
+):
+    notif = Notification(
+        user_id=user_id,
+        message=message,
+        crack_id=crack_id,
+        inviter_id=inviter_id,
+    )
     db.add(notif)
     db.commit()
     db.refresh(notif)
     return notif
+

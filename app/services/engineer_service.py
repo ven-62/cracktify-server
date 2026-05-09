@@ -35,6 +35,7 @@ async def invite_engineer_to_user(user_id: int, engineer_username: str, db):
     notif = create_notification(
         user_id=engineer.id,
         message=f"You are invited by {user.first_name} {user.last_name} ({user.username}) to be their structural engineer. You can accept or ignore the invitation below.",
+        inviter_id=user.id,
         db=db,
     )
 
