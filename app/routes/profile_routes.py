@@ -1,22 +1,12 @@
-from ast import Dict
-import io
-import re
-from typing import Any
 from fastapi import APIRouter, Depends, Body
-from fastapi.responses import FileResponse, StreamingResponse
 from sqlalchemy.orm import Session
 from app.database.db import get_db
 from app.services.profile_service import (
-    accept_engineer_assignment,
-    invite_engineer_to_user,
     update_profile,
-    verify_engineer_assignment,
     verify_user_password,
     get_user,
     update_password,
     delete_account,
-    get_all_engineers_username,
-    get_associated_users
 )
 
 router = APIRouter()
@@ -24,18 +14,23 @@ router = APIRouter()
 
 @router.get("/")
 def api_get_profile(data: dict = Body(...), db: Session = Depends(get_db)):
+    """Endpoint to fetch the profile information of a user."""
     user_id = data.get("user_id")
 
     return get_user(user_id, db)
 
+
 @router.post("/update")
 def api_update_profile(data: dict = Body(...), db: Session = Depends(get_db)):
+    """Endpoint to update the profile information of a user."""
     profile_data = data.get("profile_data", {})
 
     return update_profile(profile_data, db)
 
+
 @router.post("/verify_password")
 def api_verify_user_password(data: dict = Body(...), db: Session = Depends(get_db)):
+    """Endpoint to verify the user's current password before allowing sensitive operations."""
     user_id = data.get("user_id")
     old_password = data.get("old_password")
 
@@ -44,6 +39,7 @@ def api_verify_user_password(data: dict = Body(...), db: Session = Depends(get_d
 
 @router.post("/update_password")
 def api_update_password(data: dict = Body(...), db: Session = Depends(get_db)):
+    """Endpoint to update the user's password after verifying the current password."""
     user_id = data.get("user_id")
     new_password = data.get("new_password")
 
@@ -52,39 +48,8 @@ def api_update_password(data: dict = Body(...), db: Session = Depends(get_db)):
 
 @router.post("/delete_account")
 def api_delete_account(data: dict = Body(...), db: Session = Depends(get_db)):
+    """Endpoint to delete the user's account after verifying the password."""
     user_id = data.get("user_id")
     password = data.get("password")
 
     return delete_account(user_id, password, db)
-
-@router.get("/engineers")
-def api_get_all_engineers_username(db: Session = Depends(get_db)):
-    return get_all_engineers_username(db)
-
-@router.post("/invite_engineer")
-async def api_invite_engineer(data: dict = Body(...), db: Session = Depends(get_db)):
-    user_id = data.get("user_id")
-    engineer_username = data.get("engineer_username")
-
-    return await invite_engineer_to_user(user_id, engineer_username, db)
-
-@router.post("/accept_engineer")
-async def api_accept_engineer_assignment(data: dict = Body(...), db: Session = Depends(get_db)):
-    inviter_id = data.get("inviter_id")
-    engineer_id = data.get("engineer_id")
-
-    return await accept_engineer_assignment(inviter_id, engineer_id, db)
-
-@router.post("/verify_engineer")
-async def api_verify_engineer_assignment(data: dict = Body(...), db: Session = Depends(get_db)):
-    user_id = data.get("user_id")
-    license_number = data.get("license_number")
-    document_url = data.get("document_url")
-
-    return await verify_engineer_assignment(user_id, license_number, document_url, db)
-    
-@router.get("/get_associated_users")
-def api_get_associated_users(data: dict = Body(...), db: Session = Depends(get_db)):
-    eng_id = data.get("user_id")
-
-    return get_associated_users(eng_id, db)
