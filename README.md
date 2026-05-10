@@ -23,13 +23,16 @@ Before deploying, make sure you have the following ready:
 3. Select an instance type — `t3.small` or higher is recommended.
 4. Configure a **Security Group** with the following inbound rules:
 
-   | Type | Protocol | Port | Source    |
-   |------|----------|------|-----------|
-   | SSH  | TCP      | 22   | Your IP   |
-   | HTTP | TCP      | 8000 | 0.0.0.0/0 |
+   | Type       | Protocol | Port | Source              |
+   |------------|----------|------|---------------------|
+   | SSH        | TCP      | 22   | Your IP             |
+   | Custom TCP | TCP      | 8000 | `cracktify-alb-sg`  |
+
+   > Port `8000` must only be open to the ALB security group — **not** `0.0.0.0/0`. This ensures traffic always flows through the ALB and cannot bypass it directly via the EC2 public IP.
 
 5. Create or select an existing **key pair** (`.pem`) — you'll need this to SSH in.
 6. Launch the instance and note the **Public IPv4 address**.
+7. Make sure the instance is in **`ap-southeast-1c`** (or whichever AZ your ALB covers — they must match).
 
 ---
 
@@ -37,22 +40,22 @@ Before deploying, make sure you have the following ready:
 
 The server loads all credentials from AWS Secrets Manager via `get_secret()`. Create a secret with the following keys:
 
-| Key                     | Description                                 |
-|-------------------------|---------------------------------------------|
-| `SQLHOST`               | PostgreSQL host (e.g., RDS endpoint)        |
-| `SQLUSER`               | PostgreSQL username                         |
-| `SQLPASSWORD`           | PostgreSQL password                         |
-| `SQLDATABASE`           | PostgreSQL database name                    |
-| `SQLPORT`               | PostgreSQL port (default: `5432`)           |
-| `ADMIN_USER`            | Your admin username                         |
-| `ADMIN_EMAIL`           | Your admin email address                    |
-| `ADMIN_PASSWORD`        | Your hashed password (generated in `utils/password.py`)|
-| `JWT_SECRET_KEY`        | Secret key for signing JWT tokens           |
-| `GMAIL_CREDENTIALS`     | Base64-encoded Gmail API `credentials.json` |
-| `GMAIL_TOKEN`           | Base64-encoded Gmail API `token.json`       |
-| `CLOUDINARY_CLOUD_NAME` | Your Cloudinary cloud name                  |
-| `CLOUDINARY_API_KEY`    | Your Cloudinary API key                     |
-| `CLOUDINARY_SECRET_KEY` | Your Cloudinary secret key                  |
+| Key                     | Description                                          |
+|-------------------------|------------------------------------------------------|
+| `SQLHOST`               | PostgreSQL host (e.g., RDS endpoint)                 |
+| `SQLUSER`               | PostgreSQL username                                  |
+| `SQLPASSWORD`           | PostgreSQL password                                  |
+| `SQLDATABASE`           | PostgreSQL database name                             |
+| `SQLPORT`               | PostgreSQL port (default: `5432`)                    |
+| `ADMIN_USER`            | Your admin username                                  |
+| `ADMIN_EMAIL`           | Your admin email address                             |
+| `ADMIN_PASSWORD`        | Your hashed password (generated in `utils/password.py`) |
+| `JWT_SECRET_KEY`        | Secret key for signing JWT tokens                    |
+| `GMAIL_CREDENTIALS`     | Base64-encoded Gmail API `credentials.json`          |
+| `GMAIL_TOKEN`           | Base64-encoded Gmail API `token.json`                |
+| `CLOUDINARY_CLOUD_NAME` | Your Cloudinary cloud name                           |
+| `CLOUDINARY_API_KEY`    | Your Cloudinary API key                              |
+| `CLOUDINARY_SECRET_KEY` | Your Cloudinary secret key                           |
 
 To base64-encode your Gmail files:
 ```bash
@@ -91,7 +94,77 @@ docker --version
 
 ---
 
-## Step 4 — Configure GitHub Secrets
+## Step 4 — Set Up the Application Load Balancer (ALB)
+
+The ALB sits in front of your EC2, provides a stable DNS endpoint, and handles health checks automatically.
+
+### 4.1 — Create a Security Group for the ALB
+
+1. Go to **EC2 → Security Groups → Create security group**
+2. Fill in:
+   - **Name** → `cracktify-alb-sg`
+   - **VPC** → same VPC as your EC2
+3. Add **Inbound rule**:
+
+   | Type | Protocol | Port | Source    |
+   |------|----------|------|-----------|
+   | HTTP | TCP      | 80   | 0.0.0.0/0 |
+
+4. **Outbound rules** → leave as `All traffic 0.0.0.0/0`
+5. Click **Create security group**
+
+### 4.2 — Create a Target Group
+
+1. Go to **EC2 → Target Groups → Create target group**
+2. Fill in:
+   - **Target type** → `Instances`
+   - **Name** → `cracktify-tg`
+   - **Protocol** → `HTTP`
+   - **Port** → `8000`
+   - **VPC** → same VPC as your EC2
+3. Under **Health checks**:
+   - **Protocol** → `HTTP`
+   - **Path** → `/`
+   - **Port** → Override → `8000`
+   - **Healthy threshold** → `2`
+   - **Unhealthy threshold** → `2`
+   - **Timeout** → `5`
+   - **Interval** → `10`
+4. Click **Next** → select your EC2 instance → set port to `8000` → **Include as pending** → **Create target group**
+
+### 4.3 — Create the Load Balancer
+
+1. Go to **EC2 → Load Balancers → Create Load Balancer → Application Load Balancer**
+2. Fill in:
+   - **Name** → `cracktify-alb`
+   - **Scheme** → `Internet-facing`
+   - **IP address type** → `IPv4`
+3. Under **Network mapping**:
+   - **VPC** → same VPC as your EC2
+   - **Availability Zones** → select **all AZs** including the one your EC2 is in (e.g. `ap-southeast-1c`)
+4. Under **Security groups** → remove default → attach `cracktify-alb-sg`
+5. Under **Listeners** → `HTTP:80` → Forward to `cracktify-tg`
+6. Click **Create load balancer**
+
+### 4.4 — Lock Down EC2 Security Group
+
+Once the ALB is running, prevent direct access to your EC2 on port `8000`:
+
+1. Go to **EC2 → Security Groups → your EC2's SG → Edit inbound rules**
+2. **Delete** any rule with port `8000` and source `0.0.0.0/0`
+3. **Add a new rule**:
+
+   | Type       | Protocol | Port | Source             |
+   |------------|----------|------|--------------------|
+   | Custom TCP | TCP      | 8000 | `cracktify-alb-sg` |
+
+4. Click **Save rules**
+
+> Always delete the old `0.0.0.0/0` rule first and add a new SG-based rule — you cannot edit a CIDR rule into a security group reference rule directly.
+
+---
+
+## Step 5 — Configure GitHub Secrets
 
 Go to your GitHub repository → **Settings → Secrets and variables → Actions** and add:
 
@@ -104,7 +177,7 @@ Go to your GitHub repository → **Settings → Secrets and variables → Action
 
 ---
 
-## Step 5 — Deploy via CI/CD (Automatic)
+## Step 6 — Deploy via CI/CD (Automatic)
 
 Push to the `main` branch to trigger the pipeline:
 ```bash
@@ -123,7 +196,7 @@ Monitor progress under the **Actions** tab in your GitHub repository.
 
 ---
 
-## Step 6 — Manual Deployment (Optional)
+## Step 7 — Manual Deployment (Optional)
 
 To deploy manually on the EC2 instance:
 ```bash
@@ -139,17 +212,18 @@ docker rm -f fastapi || true
 # Start the new container
 docker run -d \
   --name fastapi \
+  --restart always \
   -p 8000:8000 \
   ghcr.io/<github-org>/<repo-name>:latest
 ```
 
 ---
 
-## Step 7 — Verify the Deployment
+## Step 8 — Verify the Deployment
 
-Check that the API is live:
+**Check via ALB DNS (correct way):**
 ```bash
-curl http://<EC2_PUBLIC_IP>:8000/
+curl http://<ALB_DNS_NAME>/
 ```
 
 Expected response:
@@ -157,9 +231,16 @@ Expected response:
 { "message": "Connected to Cracktify API!" }
 ```
 
-Interactive API docs are available at:
+Interactive API docs:
+```
+http://<ALB_DNS_NAME>/docs
+```
 
-`http://<EC2_PUBLIC_IP>:8000/docs`
+**Check Target Group health:**
+
+Go to **EC2 → Target Groups → cracktify-tg → Targets tab** — your EC2 should show as `healthy`.
+
+> ⚠️ Do **not** use the EC2 public IP directly (`http://<EC2_IP>:8000`). Port `8000` is locked to the ALB only — direct access will time out. Always use the ALB DNS name.
 
 ---
 
@@ -200,8 +281,16 @@ GitHub (push to main)
            - docker run -d --name fastapi -p 8000:8000
                     |
                     v
+         Internet Gateway (AWS VPC)
+                    |
+                    v
+       Application Load Balancer (:80)
+       cracktify-alb-sg (inbound: 80)
+                    |
+                    v
              EC2 Instance (:8000)
              Docker container: fastapi
+             cracktify-ec2-sg (inbound: 8000 from ALB only)
                     |
                     v
           FastAPI — Cracktify API v2.0.0
@@ -255,10 +344,24 @@ docker logs fastapi
 ```
 Check for missing secrets — the most common cause is a key in AWS Secrets Manager that is misspelled or missing entirely.
 
-**Cannot connect to the API from outside**
-- Confirm the EC2 Security Group allows inbound TCP on port `8000` from `0.0.0.0/0`.
-- Confirm the container is running: `docker ps`.
-- Confirm you are using the correct **Public IPv4**, not the private IP.
+**504 Gateway Timeout on ALB DNS**
+- Port `8000` on EC2 SG is not open to the ALB SG — go to EC2 SG inbound rules, delete the old `0.0.0.0/0` rule and add a new rule with source set to `cracktify-alb-sg`.
+- Target Group is unhealthy — check **EC2 → Target Groups → cracktify-tg → Targets tab**.
+- EC2 is in a different AZ than the ALB — go to **EC2 → Load Balancers → cracktify-alb → Actions → Edit subnets** and add the AZ your EC2 is in.
+
+**Target Group shows `unused`**
+- Your EC2 is not registered — go to **Target Groups → cracktify-tg → Register targets**, select your instance and set port to `8000`.
+- AZ mismatch — your EC2's AZ must be included in the ALB's network mapping.
+
+**Target Group shows `unhealthy`**
+- Health check port is wrong — go to **Target Groups → Health checks → Edit** and set Port to Override `8000`.
+- Docker container is not running — SSH in and run `docker ps`, then `docker logs fastapi`.
+
+**Cannot edit port 8000 source from `0.0.0.0/0` to ALB SG**
+- You cannot convert a CIDR rule to a SG reference rule by editing — you must **delete** the existing rule and **add a new one** with the ALB SG as source.
+
+**Direct EC2 IP access times out**
+- This is expected and correct after locking down port `8000` to ALB only. Always use the ALB DNS name instead.
 
 **GitHub Actions deploy job fails at SSH step**
 - Verify `EC2_HOST` has no extra spaces or newlines.
@@ -273,3 +376,5 @@ Check for missing secrets — the most common cause is a key in AWS Secrets Mana
 - Confirm the RDS Security Group allows inbound TCP on port `5432` from the EC2 Security Group.
 - Confirm `SQLHOST`, `SQLUSER`, `SQLPASSWORD`, and `SQLDATABASE` are correct in Secrets Manager.
 - The connection uses `sslmode=require` — ensure your RDS instance has SSL enabled.
+README
+echo "done"
